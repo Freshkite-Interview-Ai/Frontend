@@ -1,13 +1,14 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { DashboardLayout, PageHeader } from '@/components/layout';
 import { Card, CardContent, Button, LoadingPage, Badge } from '@/components/ui';
 import { useAppStore } from '@/store';
-import { resumeService } from '@/services';
+import { resumeService, analyticsService } from '@/services';
+import { UserAnalytics } from '@/types';
 
 interface QuickAction {
   title: string;
@@ -76,16 +77,19 @@ export default function DashboardPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const { resume, setResume, setResumeLoading } = useAppStore();
+  const [analytics, setAnalytics] = useState<UserAnalytics | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
   
   const isLoading = status === 'loading';
   const isAuthenticated = status === 'authenticated';
   const user = session?.user;
 
-  // Load resume status from backend on mount
+  // Load resume status and analytics from backend on mount
   useEffect(() => {
-    const loadResume = async () => {
+    const loadData = async () => {
       if (!isAuthenticated) return;
       
+      // Load resume
       try {
         setResumeLoading(true);
         const response = await resumeService.getMyResume();
@@ -97,9 +101,20 @@ export default function DashboardPage() {
       } finally {
         setResumeLoading(false);
       }
+
+      // Load analytics
+      try {
+        setAnalyticsLoading(true);
+        const analyticsData = await analyticsService.getUserAnalytics();
+        setAnalytics(analyticsData);
+      } catch (error) {
+        console.error('Failed to load analytics:', error);
+      } finally {
+        setAnalyticsLoading(false);
+      }
     };
 
-    loadResume();
+    loadData();
   }, [isAuthenticated, setResume, setResumeLoading]);
 
   if (isLoading) {
@@ -119,13 +134,16 @@ export default function DashboardPage() {
       />
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <Card className="bg-white dark:bg-secondary-800 border-secondary-200 dark:border-secondary-700 overflow-hidden group hover:shadow-lg transition-all duration-300">
           <CardContent>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-secondary-500 dark:text-secondary-400">Concepts Practiced</p>
-                <p className="text-3xl font-bold text-secondary-900 dark:text-white mt-1">0</p>
+                <p className="text-3xl font-bold text-secondary-900 dark:text-white mt-1">
+                  {analyticsLoading ? '...' : analytics?.totalConceptsPracticed ?? 0}
+                </p>
+                <p className="text-xs text-secondary-400 dark:text-secondary-500 mt-1">Rating &gt; 8</p>
               </div>
               <div className="w-14 h-14 bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900/50 dark:to-primary-800/50 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                 <svg
@@ -139,6 +157,37 @@ export default function DashboardPage() {
                     strokeLinejoin="round"
                     strokeWidth={2}
                     d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                  />
+                </svg>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-white dark:bg-secondary-800 border-secondary-200 dark:border-secondary-700 overflow-hidden group hover:shadow-lg transition-all duration-300">
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-secondary-500 dark:text-secondary-400">Total Attempts</p>
+                <p className="text-3xl font-bold text-secondary-900 dark:text-white mt-1">
+                  {analyticsLoading ? '...' : analytics?.totalAttempts ?? 0}
+                </p>
+                <p className="text-xs text-secondary-400 dark:text-secondary-500 mt-1">
+                  {analytics?.totalRecordingMinutes ? `${analytics.totalRecordingMinutes.toFixed(1)} mins recorded` : 'Start practicing'}
+                </p>
+              </div>
+              <div className="w-14 h-14 bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-900/50 dark:to-purple-800/50 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <svg
+                  className="w-7 h-7 text-purple-600 dark:text-purple-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
                   />
                 </svg>
               </div>
@@ -182,12 +231,18 @@ export default function DashboardPage() {
           <CardContent>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-secondary-500 dark:text-secondary-400">Interviews Completed</p>
-                <p className="text-3xl font-bold text-secondary-900 dark:text-white mt-1">0</p>
+                <p className="text-sm font-medium text-secondary-500 dark:text-secondary-400">Current Streak</p>
+                <p className="text-3xl font-bold text-secondary-900 dark:text-white mt-1">
+                  {analyticsLoading ? '...' : analytics?.currentStreak ?? 0}
+                  <span className="text-sm font-normal text-secondary-400 dark:text-secondary-500 ml-1">days</span>
+                </p>
+                <p className="text-xs text-secondary-400 dark:text-secondary-500 mt-1">
+                  Best: {analytics?.longestStreak ?? 0} days
+                </p>
               </div>
-              <div className="w-14 h-14 bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/50 dark:to-green-800/50 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+              <div className="w-14 h-14 bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-900/50 dark:to-orange-800/50 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                 <svg
-                  className="w-7 h-7 text-green-600 dark:text-green-400"
+                  className="w-7 h-7 text-orange-600 dark:text-orange-400"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -196,7 +251,13 @@ export default function DashboardPage() {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                    d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"
                   />
                 </svg>
               </div>

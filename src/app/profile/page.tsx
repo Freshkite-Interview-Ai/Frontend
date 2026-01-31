@@ -1,27 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { DashboardLayout, PageHeader } from '@/components/layout';
 import { Card, CardContent, Button, LoadingPage, Badge } from '@/components/ui';
+import { analyticsService } from '@/services';
+import { UserAnalyticsWithDetails, PracticedConcept } from '@/types';
 
 interface StatItem {
   label: string;
   value: string | number;
   icon: React.ReactNode;
   color: string;
-}
-
-interface ActivityItem {
-  id: string;
-  type: 'concept' | 'interview' | 'resume' | 'achievement';
-  title: string;
-  description: string;
-  timestamp: string;
-  icon: React.ReactNode;
 }
 
 const CameraIcon = () => (
@@ -41,10 +34,31 @@ export default function ProfilePage() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [activeTab, setActiveTab] = useState<'overview' | 'activity' | 'achievements'>('overview');
+  const [analytics, setAnalytics] = useState<UserAnalyticsWithDetails | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
 
   const isLoading = status === 'loading';
   const isAuthenticated = status === 'authenticated';
   const user = session?.user;
+
+  // Load analytics data
+  useEffect(() => {
+    const loadAnalytics = async () => {
+      if (!isAuthenticated) return;
+      
+      try {
+        setAnalyticsLoading(true);
+        const data = await analyticsService.getUserAnalyticsWithDetails();
+        setAnalytics(data);
+      } catch (error) {
+        console.error('Failed to load analytics:', error);
+      } finally {
+        setAnalyticsLoading(false);
+      }
+    };
+
+    loadAnalytics();
+  }, [isAuthenticated]);
 
   if (isLoading) {
     return <LoadingPage message="Loading profile..." />;
@@ -55,10 +69,15 @@ export default function ProfilePage() {
     return null;
   }
 
+  // Calculate practice hours from recording minutes
+  const practiceHours = analytics?.totalRecordingMinutes 
+    ? (analytics.totalRecordingMinutes / 60).toFixed(1) 
+    : '0';
+
   const stats: StatItem[] = [
     {
       label: 'Concepts Practiced',
-      value: 12,
+      value: analyticsLoading ? '...' : (analytics?.totalConceptsPracticed ?? 0),
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
@@ -67,18 +86,18 @@ export default function ProfilePage() {
       color: 'from-primary-500 to-primary-600',
     },
     {
-      label: 'Interviews Completed',
-      value: 5,
+      label: 'Total Attempts',
+      value: analyticsLoading ? '...' : (analytics?.totalAttempts ?? 0),
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
         </svg>
       ),
       color: 'from-green-500 to-green-600',
     },
     {
       label: 'Practice Hours',
-      value: '8.5',
+      value: analyticsLoading ? '...' : practiceHours,
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -87,83 +106,25 @@ export default function ProfilePage() {
       color: 'from-blue-500 to-blue-600',
     },
     {
-      label: 'Achievements',
-      value: 3,
+      label: 'Current Streak',
+      value: analyticsLoading ? '...' : `${analytics?.currentStreak ?? 0} days`,
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" />
         </svg>
       ),
-      color: 'from-yellow-500 to-orange-500',
-    },
-  ];
-
-  const recentActivity: ActivityItem[] = [
-    {
-      id: '1',
-      type: 'concept',
-      title: 'Practiced React Hooks',
-      description: 'Completed explanation of useState and useEffect',
-      timestamp: '2 hours ago',
-      icon: (
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900/50 dark:to-primary-800/50 flex items-center justify-center">
-          <svg className="w-5 h-5 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-          </svg>
-        </div>
-      ),
-    },
-    {
-      id: '2',
-      type: 'interview',
-      title: 'Completed Mock Interview',
-      description: 'Frontend Developer - 45 minutes',
-      timestamp: 'Yesterday',
-      icon: (
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/50 dark:to-green-800/50 flex items-center justify-center">
-          <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-          </svg>
-        </div>
-      ),
-    },
-    {
-      id: '3',
-      type: 'resume',
-      title: 'Updated Resume',
-      description: 'Added new project experience',
-      timestamp: '3 days ago',
-      icon: (
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/50 dark:to-blue-800/50 flex items-center justify-center">
-          <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-        </div>
-      ),
-    },
-    {
-      id: '4',
-      type: 'achievement',
-      title: 'Earned "Quick Learner" Badge',
-      description: 'Completed 10 concepts in one week',
-      timestamp: '1 week ago',
-      icon: (
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-100 to-orange-200 dark:from-yellow-900/50 dark:to-orange-800/50 flex items-center justify-center">
-          <svg className="w-5 h-5 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-          </svg>
-        </div>
-      ),
+      color: 'from-orange-500 to-orange-600',
     },
   ];
 
   const achievements = [
-    { id: '1', name: 'Quick Learner', description: 'Complete 10 concepts in one week', earned: true, icon: '🚀' },
-    { id: '2', name: 'First Steps', description: 'Complete your first concept', earned: true, icon: '👣' },
-    { id: '3', name: 'Interview Ready', description: 'Complete 5 mock interviews', earned: true, icon: '🎯' },
-    { id: '4', name: 'Consistency King', description: 'Practice for 7 consecutive days', earned: false, icon: '👑' },
-    { id: '5', name: 'Deep Diver', description: 'Master 20 advanced concepts', earned: false, icon: '🏊' },
-    { id: '6', name: 'Perfectionist', description: 'Get 100% on an interview', earned: false, icon: '💯' },
+    { id: '1', name: 'First Steps', description: 'Complete your first concept', earned: (analytics?.totalAttempts ?? 0) >= 1, icon: '👣' },
+    { id: '2', name: 'Quick Learner', description: 'Practice 5 concepts', earned: (analytics?.totalConceptsPracticed ?? 0) >= 5, icon: '🚀' },
+    { id: '3', name: 'Expert', description: 'Practice 10 concepts', earned: (analytics?.totalConceptsPracticed ?? 0) >= 10, icon: '🎯' },
+    { id: '4', name: 'Consistency King', description: 'Practice for 7 consecutive days', earned: (analytics?.currentStreak ?? 0) >= 7, icon: '👑' },
+    { id: '5', name: 'Deep Diver', description: 'Complete 20 practice attempts', earned: (analytics?.totalAttempts ?? 0) >= 20, icon: '🏊' },
+    { id: '6', name: 'Perfectionist', description: 'Get a rating above 9', earned: (analytics?.averageRating ?? 0) > 9, icon: '💯' },
   ];
 
   const tabs = [
@@ -270,39 +231,97 @@ export default function ProfilePage() {
         {/* Tab Content */}
         {activeTab === 'overview' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Bio Section */}
+            {/* Practiced Concepts Section */}
             <Card className="lg:col-span-2">
               <CardContent>
-                <h3 className="text-lg font-semibold text-secondary-900 dark:text-white mb-4">About</h3>
-                <p className="text-secondary-600 dark:text-secondary-400 leading-relaxed">
-                  Passionate software developer with a focus on frontend technologies. Currently preparing for technical interviews and improving my skills in React, TypeScript, and system design. Always eager to learn and grow!
-                </p>
-                <div className="grid grid-cols-2 gap-4 mt-6">
-                  <div className="p-4 rounded-xl bg-secondary-50 dark:bg-secondary-700/50">
-                    <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-1">Location</p>
-                    <p className="text-secondary-900 dark:text-white font-medium">San Francisco, CA</p>
-                  </div>
-                  <div className="p-4 rounded-xl bg-secondary-50 dark:bg-secondary-700/50">
-                    <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-1">Member Since</p>
-                    <p className="text-secondary-900 dark:text-white font-medium">January 2026</p>
-                  </div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-secondary-900 dark:text-white">Practiced Concepts</h3>
+                  <span className="text-sm text-secondary-500 dark:text-secondary-400">
+                    Rating &gt; 8 required
+                  </span>
                 </div>
+                {analyticsLoading ? (
+                  <div className="flex items-center justify-center h-32">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+                  </div>
+                ) : analytics?.practicedConcepts && analytics.practicedConcepts.length > 0 ? (
+                  <div className="space-y-3">
+                    {analytics.practicedConcepts.slice(0, 5).map((concept) => (
+                      <div
+                        key={concept.id}
+                        className="flex items-center justify-between p-4 rounded-xl bg-secondary-50 dark:bg-secondary-700/50 hover:bg-secondary-100 dark:hover:bg-secondary-700 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/50 dark:to-green-800/50 flex items-center justify-center">
+                            <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                          <div>
+                            <h4 className="font-medium text-secondary-900 dark:text-white">{concept.title}</h4>
+                            <p className="text-sm text-secondary-500 dark:text-secondary-400">
+                              {concept.totalAttempts} attempt{concept.totalAttempts !== 1 ? 's' : ''}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-lg font-bold text-green-600 dark:text-green-400">
+                            {concept.bestRating.toFixed(1)}
+                          </div>
+                          <div className="text-xs text-secondary-400 dark:text-secondary-500">best rating</div>
+                        </div>
+                      </div>
+                    ))}
+                    {analytics.practicedConcepts.length > 5 && (
+                      <Link href="/concepts">
+                        <Button variant="outline" className="w-full mt-2">
+                          View All ({analytics.practicedConcepts.length} concepts)
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-secondary-100 dark:bg-secondary-700 flex items-center justify-center">
+                      <svg className="w-8 h-8 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                      </svg>
+                    </div>
+                    <p className="text-secondary-600 dark:text-secondary-400 mb-2">No concepts practiced yet</p>
+                    <p className="text-sm text-secondary-500 dark:text-secondary-500 mb-4">
+                      Practice concepts and score above 8 to see them here
+                    </p>
+                    <Link href="/concepts">
+                      <Button size="sm">Start Practicing</Button>
+                    </Link>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
-            {/* Skills Section */}
+            {/* Stats Summary Section */}
             <Card>
               <CardContent>
-                <h3 className="text-lg font-semibold text-secondary-900 dark:text-white mb-4">Skills</h3>
-                <div className="flex flex-wrap gap-2">
-                  {['React', 'TypeScript', 'Node.js', 'Python', 'AWS', 'Docker', 'GraphQL', 'PostgreSQL'].map((skill) => (
-                    <span
-                      key={skill}
-                      className="px-3 py-1.5 bg-secondary-100 dark:bg-secondary-700 text-secondary-700 dark:text-secondary-300 rounded-lg text-sm font-medium hover:bg-primary-100 dark:hover:bg-primary-900/50 hover:text-primary-700 dark:hover:text-primary-300 transition-colors cursor-default"
-                    >
-                      {skill}
-                    </span>
-                  ))}
+                <h3 className="text-lg font-semibold text-secondary-900 dark:text-white mb-4">Stats Summary</h3>
+                <div className="space-y-4">
+                  <div className="p-4 rounded-xl bg-secondary-50 dark:bg-secondary-700/50">
+                    <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-1">Average Rating</p>
+                    <p className="text-2xl font-bold text-secondary-900 dark:text-white">
+                      {analytics?.averageRating ? analytics.averageRating.toFixed(1) : '-'}
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-xl bg-secondary-50 dark:bg-secondary-700/50">
+                    <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-1">Longest Streak</p>
+                    <p className="text-2xl font-bold text-secondary-900 dark:text-white">
+                      {analytics?.longestStreak ?? 0} days
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-xl bg-secondary-50 dark:bg-secondary-700/50">
+                    <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-1">Member Since</p>
+                    <p className="text-secondary-900 dark:text-white font-medium">
+                      {session?.user ? 'January 2026' : '-'}
+                    </p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -312,33 +331,55 @@ export default function ProfilePage() {
         {activeTab === 'activity' && (
           <Card>
             <CardContent>
-              <h3 className="text-lg font-semibold text-secondary-900 dark:text-white mb-6">Recent Activity</h3>
-              <div className="space-y-4">
-                {recentActivity.map((activity, index) => (
-                  <div
-                    key={activity.id}
-                    className="flex items-start gap-4 p-4 rounded-2xl bg-secondary-50 dark:bg-secondary-700/50 hover:bg-secondary-100 dark:hover:bg-secondary-700 transition-colors group"
-                  >
-                    {activity.icon}
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-secondary-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
-                        {activity.title}
-                      </h4>
-                      <p className="text-sm text-secondary-500 dark:text-secondary-400 mt-0.5">
-                        {activity.description}
-                      </p>
+              <h3 className="text-lg font-semibold text-secondary-900 dark:text-white mb-6">Recent Practice</h3>
+              {analyticsLoading ? (
+                <div className="flex items-center justify-center h-32">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+                </div>
+              ) : analytics?.practicedConcepts && analytics.practicedConcepts.length > 0 ? (
+                <div className="space-y-4">
+                  {analytics.practicedConcepts.map((concept) => (
+                    <div
+                      key={concept.id}
+                      className="flex items-start gap-4 p-4 rounded-2xl bg-secondary-50 dark:bg-secondary-700/50 hover:bg-secondary-100 dark:hover:bg-secondary-700 transition-colors group"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900/50 dark:to-primary-800/50 flex items-center justify-center">
+                        <svg className="w-5 h-5 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-secondary-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                          Practiced {concept.title}
+                        </h4>
+                        <p className="text-sm text-secondary-500 dark:text-secondary-400 mt-0.5">
+                          Best rating: {concept.bestRating.toFixed(1)} • {concept.totalAttempts} attempt{concept.totalAttempts !== 1 ? 's' : ''}
+                        </p>
+                      </div>
+                      <span className="text-xs text-secondary-400 dark:text-secondary-500 whitespace-nowrap">
+                        {concept.lastAttemptAt 
+                          ? new Date(concept.lastAttemptAt).toLocaleDateString()
+                          : 'Unknown'}
+                      </span>
                     </div>
-                    <span className="text-xs text-secondary-400 dark:text-secondary-500 whitespace-nowrap">
-                      {activity.timestamp}
-                    </span>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-secondary-100 dark:bg-secondary-700 flex items-center justify-center">
+                    <svg className="w-8 h-8 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                   </div>
-                ))}
-              </div>
-              <div className="mt-6 text-center">
-                <Button variant="outline" size="sm">
-                  View All Activity
-                </Button>
-              </div>
+                  <p className="text-secondary-600 dark:text-secondary-400 mb-2">No recent activity</p>
+                  <p className="text-sm text-secondary-500 dark:text-secondary-500 mb-4">
+                    Start practicing to see your activity here
+                  </p>
+                  <Link href="/concepts">
+                    <Button size="sm">Browse Concepts</Button>
+                  </Link>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}

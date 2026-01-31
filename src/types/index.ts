@@ -124,3 +124,47 @@ export interface AudioReport {
   transcript: string | null;
   createdAt: string;
 }
+
+// Analytics Types
+export interface UserAnalytics {
+  totalConceptsPracticed: number;
+  totalAttempts: number;
+  totalRecordingMinutes: number;
+  averageRating: number | null;
+  interviewsCompleted: number;
+  currentStreak: number;
+  longestStreak: number;
+  lastActivityAt: string | null;
+}
+
+export interface ConceptPractice {
+  isPracticed: boolean;
+  bestRating: number | null;
+  totalAttempts: number;
+  lastAttemptAt: string | null;
+  firstPracticedAt: string | null;
+}
+
+export interface PracticedConcept {
+  id: string;
+  title: string;
+  bestRating: number;
+  totalAttempts: number;
+  lastAttemptAt: string | null;
+  firstPracticedAt: string | null;
+}
+
+export interface ConceptPracticeWithDetails extends ConceptPractice {
+  concept: {
+    id: string;
+    title: string;
+    description: string;
+    difficulty: string;
+    group: string;
+  };
+}
+
+export interface UserAnalyticsWithDetails extends UserAnalytics {
+  practicedConcepts: PracticedConcept[];
+}
+
