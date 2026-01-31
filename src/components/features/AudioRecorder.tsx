@@ -152,32 +152,32 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-secondary-200 p-6">
+    <div className="bg-white dark:bg-secondary-800 rounded-xl border border-secondary-200 dark:border-secondary-700 p-6">
       {/* Recording visualization */}
       <div className="flex flex-col items-center mb-6">
         <div
           className={`w-24 h-24 rounded-full flex items-center justify-center mb-4 transition-all duration-300 ${
             isRecording && !isPaused
-              ? 'bg-red-100 animate-pulse'
+              ? 'bg-red-100 dark:bg-red-900/50 animate-pulse'
               : isPaused
-              ? 'bg-yellow-100'
+              ? 'bg-yellow-100 dark:bg-yellow-900/50'
               : audioUrl
-              ? 'bg-green-100'
-              : 'bg-secondary-100'
+              ? 'bg-green-100 dark:bg-green-900/50'
+              : 'bg-secondary-100 dark:bg-secondary-700'
           }`}
         >
           {isRecording && !isPaused ? (
             <div className="w-8 h-8 bg-red-500 rounded-full animate-pulse" />
           ) : isPaused ? (
-            <svg className="w-10 h-10 text-yellow-600" fill="currentColor" viewBox="0 0 24 24">
+            <svg className="w-10 h-10 text-yellow-600 dark:text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
               <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
             </svg>
           ) : audioUrl ? (
-            <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-10 h-10 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           ) : (
-            <svg className="w-10 h-10 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-10 h-10 text-secondary-400 dark:text-secondary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -189,10 +189,10 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
         </div>
 
         {/* Duration display */}
-        <div className="text-3xl font-mono font-bold text-secondary-900">
+        <div className="text-3xl font-mono font-bold text-secondary-900 dark:text-white">
           {formatDuration(duration)}
         </div>
-        <div className="text-sm text-secondary-500 mt-1">
+        <div className="text-sm text-secondary-500 dark:text-secondary-400 mt-1">
           {isRecording
             ? isPaused
               ? 'Paused'
@@ -201,7 +201,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
             ? 'Recording complete'
             : 'Ready to record'}
         </div>
-        <div className="text-xs text-secondary-400 mt-1">
+        <div className="text-xs text-secondary-400 dark:text-secondary-500 mt-1">
           Max duration: {formatDuration(maxDuration)}
         </div>
       </div>

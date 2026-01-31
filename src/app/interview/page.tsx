@@ -113,9 +113,9 @@ export default function InterviewPage() {
             <Card>
               <CardContent>
                 <div className="text-center py-8">
-                  <div className="w-20 h-20 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
+                  <div className="w-20 h-20 bg-primary-100 dark:bg-primary-900/50 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
                     <svg
-                      className="w-10 h-10 text-primary-600"
+                      className="w-10 h-10 text-primary-600 dark:text-primary-400"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -133,26 +133,26 @@ export default function InterviewPage() {
                     {currentInterview.status.replace('-', ' ').toUpperCase()}
                   </Badge>
 
-                  <h2 className="text-2xl font-bold text-secondary-900 mb-2">
+                  <h2 className="text-2xl font-bold text-secondary-900 dark:text-white mb-2">
                     Interview in Progress
                   </h2>
 
-                  <p className="text-secondary-600 mb-2">
+                  <p className="text-secondary-600 dark:text-secondary-400 mb-2">
                     Started at{' '}
                     {currentInterview.startedAt
                       ? new Date(currentInterview.startedAt).toLocaleTimeString()
                       : 'N/A'}
                   </p>
 
-                  <p className="text-sm text-secondary-500 mb-8">
+                  <p className="text-sm text-secondary-500 dark:text-secondary-400 mb-8">
                     Session ID: {currentInterview.id}
                   </p>
 
                   {/* Interview Content Placeholder */}
-                  <div className="bg-secondary-50 rounded-xl p-8 mb-8">
-                    <div className="w-16 h-16 bg-secondary-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="bg-secondary-50 dark:bg-secondary-700/50 rounded-xl p-8 mb-8">
+                    <div className="w-16 h-16 bg-secondary-200 dark:bg-secondary-600 rounded-full flex items-center justify-center mx-auto mb-4">
                       <svg
-                        className="w-8 h-8 text-secondary-400"
+                        className="w-8 h-8 text-secondary-400 dark:text-secondary-500"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -165,10 +165,10 @@ export default function InterviewPage() {
                         />
                       </svg>
                     </div>
-                    <h3 className="font-medium text-secondary-700 mb-2">
+                    <h3 className="font-medium text-secondary-700 dark:text-secondary-300 mb-2">
                       AI Interview Coming Soon
                     </h3>
-                    <p className="text-sm text-secondary-500">
+                    <p className="text-sm text-secondary-500 dark:text-secondary-400">
                       This is where the AI interviewer will ask questions and you can respond.
                       The feature is currently under development.
                     </p>
@@ -189,9 +189,9 @@ export default function InterviewPage() {
             <Card>
               <CardContent>
                 <div className="text-center py-12">
-                  <div className="w-20 h-20 bg-secondary-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <div className="w-20 h-20 bg-secondary-100 dark:bg-secondary-700 rounded-full flex items-center justify-center mx-auto mb-6">
                     <svg
-                      className="w-10 h-10 text-secondary-400"
+                      className="w-10 h-10 text-secondary-400 dark:text-secondary-500"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -205,20 +205,20 @@ export default function InterviewPage() {
                     </svg>
                   </div>
 
-                  <h2 className="text-2xl font-bold text-secondary-900 mb-2">
+                  <h2 className="text-2xl font-bold text-secondary-900 dark:text-white mb-2">
                     Ready for Your Interview?
                   </h2>
 
-                  <p className="text-secondary-600 max-w-md mx-auto mb-8">
+                  <p className="text-secondary-600 dark:text-secondary-400 max-w-md mx-auto mb-8">
                     Start a mock interview session to practice answering technical questions.
                     The AI interviewer will adapt to your experience level.
                   </p>
 
                   {!resume && (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-8 max-w-md mx-auto">
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-4 mb-8 max-w-md mx-auto">
                       <div className="flex items-start gap-3">
                         <svg
-                          className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5"
+                          className="w-5 h-5 text-yellow-600 dark:text-yellow-500 flex-shrink-0 mt-0.5"
                           fill="currentColor"
                           viewBox="0 0 20 20"
                         >
@@ -229,13 +229,13 @@ export default function InterviewPage() {
                           />
                         </svg>
                         <div className="text-left">
-                          <h4 className="font-medium text-yellow-800 text-sm">
+                          <h4 className="font-medium text-yellow-800 dark:text-yellow-400 text-sm">
                             Resume Not Uploaded
                           </h4>
-                          <p className="text-sm text-yellow-700 mt-1">
+                          <p className="text-sm text-yellow-700 dark:text-yellow-500 mt-1">
                             Upload your resume for personalized questions.
                           </p>
-                          <Link href="/resume" className="text-sm text-yellow-800 underline mt-2 inline-block">
+                          <Link href="/resume" className="text-sm text-yellow-800 dark:text-yellow-400 underline mt-2 inline-block">
                             Upload Resume
                           </Link>
                         </div>
@@ -278,8 +278,8 @@ export default function InterviewPage() {
           {/* Interview Tips */}
           <Card>
             <CardContent>
-              <h3 className="font-semibold text-secondary-900 mb-4">Interview Tips</h3>
-              <ul className="space-y-3 text-sm text-secondary-600">
+              <h3 className="font-semibold text-secondary-900 dark:text-white mb-4">Interview Tips</h3>
+              <ul className="space-y-3 text-sm text-secondary-600 dark:text-secondary-400">
                 <li className="flex items-start gap-2">
                   <svg
                     className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5"
@@ -343,12 +343,12 @@ export default function InterviewPage() {
           {/* Preparation Checklist */}
           <Card>
             <CardContent>
-              <h3 className="font-semibold text-secondary-900 mb-4">Preparation Checklist</h3>
+              <h3 className="font-semibold text-secondary-900 dark:text-white mb-4">Preparation Checklist</h3>
               <ul className="space-y-3">
                 <li className="flex items-center gap-3">
                   {resume ? (
-                    <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
-                      <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                    <div className="w-6 h-6 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center">
+                      <svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
                         <path
                           fillRule="evenodd"
                           d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -357,25 +357,25 @@ export default function InterviewPage() {
                       </svg>
                     </div>
                   ) : (
-                    <div className="w-6 h-6 bg-secondary-100 rounded-full flex items-center justify-center">
-                      <div className="w-3 h-3 border-2 border-secondary-300 rounded-full" />
+                    <div className="w-6 h-6 bg-secondary-100 dark:bg-secondary-700 rounded-full flex items-center justify-center">
+                      <div className="w-3 h-3 border-2 border-secondary-300 dark:border-secondary-500 rounded-full" />
                     </div>
                   )}
-                  <span className={resume ? 'text-secondary-900' : 'text-secondary-500'}>
+                  <span className={resume ? 'text-secondary-900 dark:text-white' : 'text-secondary-500 dark:text-secondary-400'}>
                     Resume uploaded
                   </span>
                 </li>
                 <li className="flex items-center gap-3">
-                  <div className="w-6 h-6 bg-secondary-100 rounded-full flex items-center justify-center">
-                    <div className="w-3 h-3 border-2 border-secondary-300 rounded-full" />
+                  <div className="w-6 h-6 bg-secondary-100 dark:bg-secondary-700 rounded-full flex items-center justify-center">
+                    <div className="w-3 h-3 border-2 border-secondary-300 dark:border-secondary-500 rounded-full" />
                   </div>
-                  <span className="text-secondary-500">Practice concepts reviewed</span>
+                  <span className="text-secondary-500 dark:text-secondary-400">Practice concepts reviewed</span>
                 </li>
                 <li className="flex items-center gap-3">
-                  <div className="w-6 h-6 bg-secondary-100 rounded-full flex items-center justify-center">
-                    <div className="w-3 h-3 border-2 border-secondary-300 rounded-full" />
+                  <div className="w-6 h-6 bg-secondary-100 dark:bg-secondary-700 rounded-full flex items-center justify-center">
+                    <div className="w-3 h-3 border-2 border-secondary-300 dark:border-secondary-500 rounded-full" />
                   </div>
-                  <span className="text-secondary-500">Quiet environment ready</span>
+                  <span className="text-secondary-500 dark:text-secondary-400">Quiet environment ready</span>
                 </li>
               </ul>
             </CardContent>

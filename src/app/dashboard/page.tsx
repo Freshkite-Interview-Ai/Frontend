@@ -1,11 +1,13 @@
 'use client';
 
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { DashboardLayout, PageHeader } from '@/components/layout';
 import { Card, CardContent, Button, LoadingPage, Badge } from '@/components/ui';
 import { useAppStore } from '@/store';
+import { resumeService } from '@/services';
 
 interface QuickAction {
   title: string;
@@ -13,6 +15,7 @@ interface QuickAction {
   href: string;
   icon: React.ReactNode;
   color: string;
+  darkColor: string;
 }
 
 const quickActions: QuickAction[] = [
@@ -30,7 +33,8 @@ const quickActions: QuickAction[] = [
         />
       </svg>
     ),
-    color: 'bg-primary-100 text-primary-600',
+    color: 'bg-gradient-to-br from-primary-100 to-primary-200 text-primary-600',
+    darkColor: 'dark:from-primary-900/50 dark:to-primary-800/50 dark:text-primary-400',
   },
   {
     title: 'Upload Resume',
@@ -46,7 +50,8 @@ const quickActions: QuickAction[] = [
         />
       </svg>
     ),
-    color: 'bg-blue-100 text-blue-600',
+    color: 'bg-gradient-to-br from-blue-100 to-blue-200 text-blue-600',
+    darkColor: 'dark:from-blue-900/50 dark:to-blue-800/50 dark:text-blue-400',
   },
   {
     title: 'Start Interview',
@@ -62,18 +67,40 @@ const quickActions: QuickAction[] = [
         />
       </svg>
     ),
-    color: 'bg-green-100 text-green-600',
+    color: 'bg-gradient-to-br from-green-100 to-green-200 text-green-600',
+    darkColor: 'dark:from-green-900/50 dark:to-green-800/50 dark:text-green-400',
   },
 ];
 
 export default function DashboardPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
-  const { resume } = useAppStore();
+  const { resume, setResume, setResumeLoading } = useAppStore();
   
   const isLoading = status === 'loading';
   const isAuthenticated = status === 'authenticated';
   const user = session?.user;
+
+  // Load resume status from backend on mount
+  useEffect(() => {
+    const loadResume = async () => {
+      if (!isAuthenticated) return;
+      
+      try {
+        setResumeLoading(true);
+        const response = await resumeService.getMyResume();
+        if (response.data) {
+          setResume(response.data);
+        }
+      } catch (error) {
+        console.error('Failed to load resume:', error);
+      } finally {
+        setResumeLoading(false);
+      }
+    };
+
+    loadResume();
+  }, [isAuthenticated, setResume, setResumeLoading]);
 
   if (isLoading) {
     return <LoadingPage message="Loading dashboard..." />;
@@ -93,16 +120,16 @@ export default function DashboardPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card>
+        <Card className="bg-white dark:bg-secondary-800 border-secondary-200 dark:border-secondary-700 overflow-hidden group hover:shadow-lg transition-all duration-300">
           <CardContent>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-secondary-500">Concepts Practiced</p>
-                <p className="text-3xl font-bold text-secondary-900 mt-1">0</p>
+                <p className="text-sm font-medium text-secondary-500 dark:text-secondary-400">Concepts Practiced</p>
+                <p className="text-3xl font-bold text-secondary-900 dark:text-white mt-1">0</p>
               </div>
-              <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center">
+              <div className="w-14 h-14 bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900/50 dark:to-primary-800/50 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                 <svg
-                  className="w-6 h-6 text-primary-600"
+                  className="w-7 h-7 text-primary-600 dark:text-primary-400"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -119,12 +146,12 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-white dark:bg-secondary-800 border-secondary-200 dark:border-secondary-700 overflow-hidden group hover:shadow-lg transition-all duration-300">
           <CardContent>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-secondary-500">Resume Status</p>
-                <div className="mt-1">
+                <p className="text-sm font-medium text-secondary-500 dark:text-secondary-400">Resume Status</p>
+                <div className="mt-2">
                   {resume ? (
                     <Badge variant="success">Uploaded</Badge>
                   ) : (
@@ -132,9 +159,9 @@ export default function DashboardPage() {
                   )}
                 </div>
               </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+              <div className="w-14 h-14 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/50 dark:to-blue-800/50 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                 <svg
-                  className="w-6 h-6 text-blue-600"
+                  className="w-7 h-7 text-blue-600 dark:text-blue-400"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -151,16 +178,16 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-white dark:bg-secondary-800 border-secondary-200 dark:border-secondary-700 overflow-hidden group hover:shadow-lg transition-all duration-300">
           <CardContent>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-secondary-500">Interviews Completed</p>
-                <p className="text-3xl font-bold text-secondary-900 mt-1">0</p>
+                <p className="text-sm font-medium text-secondary-500 dark:text-secondary-400">Interviews Completed</p>
+                <p className="text-3xl font-bold text-secondary-900 dark:text-white mt-1">0</p>
               </div>
-              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+              <div className="w-14 h-14 bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/50 dark:to-green-800/50 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                 <svg
-                  className="w-6 h-6 text-green-600"
+                  className="w-7 h-7 text-green-600 dark:text-green-400"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -180,22 +207,22 @@ export default function DashboardPage() {
 
       {/* Quick Actions */}
       <div className="mb-8">
-        <h2 className="text-lg font-semibold text-secondary-900 mb-4">Quick Actions</h2>
+        <h2 className="text-lg font-semibold text-secondary-900 dark:text-white mb-4">Quick Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {quickActions.map((action) => (
             <Link key={action.href} href={action.href}>
-              <Card hover className="h-full">
+              <Card hover className="h-full bg-white dark:bg-secondary-800 border-secondary-200 dark:border-secondary-700 group">
                 <CardContent>
                   <div className="flex items-start gap-4">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${action.color}`}>
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${action.color} ${action.darkColor} group-hover:scale-110 transition-transform duration-300`}>
                       {action.icon}
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-secondary-900">{action.title}</h3>
-                      <p className="text-sm text-secondary-600 mt-1">{action.description}</p>
+                      <h3 className="font-semibold text-secondary-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">{action.title}</h3>
+                      <p className="text-sm text-secondary-600 dark:text-secondary-400 mt-1">{action.description}</p>
                     </div>
                     <svg
-                      className="w-5 h-5 text-secondary-400"
+                      className="w-5 h-5 text-secondary-400 dark:text-secondary-500 group-hover:text-primary-500 group-hover:translate-x-1 transition-all duration-200"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -216,23 +243,23 @@ export default function DashboardPage() {
       </div>
 
       {/* Getting Started */}
-      <Card>
+      <Card className="bg-white dark:bg-secondary-800 border-secondary-200 dark:border-secondary-700">
         <CardContent>
-          <h2 className="text-lg font-semibold text-secondary-900 mb-4">Getting Started</h2>
+          <h2 className="text-lg font-semibold text-secondary-900 dark:text-white mb-4">Getting Started</h2>
           <div className="space-y-4">
-            <div className="flex items-start gap-4 p-4 bg-secondary-50 rounded-xl">
-              <div className="w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center font-semibold text-sm">
+            <div className="flex items-start gap-4 p-4 bg-secondary-50 dark:bg-secondary-700/50 rounded-2xl group hover:bg-secondary-100 dark:hover:bg-secondary-700 transition-colors">
+              <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 text-white rounded-xl flex items-center justify-center font-semibold text-sm shadow-lg shadow-primary-500/25">
                 1
               </div>
               <div className="flex-1">
-                <h3 className="font-medium text-secondary-900">Upload Your Resume</h3>
-                <p className="text-sm text-secondary-600 mt-1">
+                <h3 className="font-medium text-secondary-900 dark:text-white">Upload Your Resume</h3>
+                <p className="text-sm text-secondary-600 dark:text-secondary-400 mt-1">
                   Get personalized interview questions based on your experience and skills.
                 </p>
               </div>
               {!resume && (
                 <Link href="/resume">
-                  <Button size="sm">Upload</Button>
+                  <Button size="sm" className="rounded-xl shadow-lg shadow-primary-500/25">Upload</Button>
                 </Link>
               )}
               {resume && (
@@ -240,33 +267,33 @@ export default function DashboardPage() {
               )}
             </div>
 
-            <div className="flex items-start gap-4 p-4 bg-secondary-50 rounded-xl">
-              <div className="w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center font-semibold text-sm">
+            <div className="flex items-start gap-4 p-4 bg-secondary-50 dark:bg-secondary-700/50 rounded-2xl group hover:bg-secondary-100 dark:hover:bg-secondary-700 transition-colors">
+              <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 text-white rounded-xl flex items-center justify-center font-semibold text-sm shadow-lg shadow-primary-500/25">
                 2
               </div>
               <div className="flex-1">
-                <h3 className="font-medium text-secondary-900">Practice Concepts</h3>
-                <p className="text-sm text-secondary-600 mt-1">
+                <h3 className="font-medium text-secondary-900 dark:text-white">Practice Concepts</h3>
+                <p className="text-sm text-secondary-600 dark:text-secondary-400 mt-1">
                   Browse our library of technical concepts and record your explanations.
                 </p>
               </div>
               <Link href="/concepts">
-                <Button size="sm" variant="outline">Browse</Button>
+                <Button size="sm" variant="outline" className="rounded-xl border-secondary-300 dark:border-secondary-600 dark:text-secondary-300 dark:hover:bg-secondary-700">Browse</Button>
               </Link>
             </div>
 
-            <div className="flex items-start gap-4 p-4 bg-secondary-50 rounded-xl">
-              <div className="w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center font-semibold text-sm">
+            <div className="flex items-start gap-4 p-4 bg-secondary-50 dark:bg-secondary-700/50 rounded-2xl group hover:bg-secondary-100 dark:hover:bg-secondary-700 transition-colors">
+              <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 text-white rounded-xl flex items-center justify-center font-semibold text-sm shadow-lg shadow-primary-500/25">
                 3
               </div>
               <div className="flex-1">
-                <h3 className="font-medium text-secondary-900">Start a Mock Interview</h3>
-                <p className="text-sm text-secondary-600 mt-1">
+                <h3 className="font-medium text-secondary-900 dark:text-white">Start a Mock Interview</h3>
+                <p className="text-sm text-secondary-600 dark:text-secondary-400 mt-1">
                   Put your skills to the test with a simulated interview session.
                 </p>
               </div>
               <Link href="/interview">
-                <Button size="sm" variant="outline">Start</Button>
+                <Button size="sm" variant="outline" className="rounded-xl border-secondary-300 dark:border-secondary-600 dark:text-secondary-300 dark:hover:bg-secondary-700">Start</Button>
               </Link>
             </div>
           </div>

@@ -102,9 +102,9 @@ export default function ConceptsPage() {
       {/* Filters */}
       <Card className="mb-8">
         <CardContent>
-          <div className="flex flex-col lg:flex-row gap-4">
+          <div className="space-y-4">
             {/* Search */}
-            <div className="flex-1">
+            <div className="w-full">
               <Input
                 placeholder="Search concepts..."
                 value={searchQuery}
@@ -122,38 +122,51 @@ export default function ConceptsPage() {
               />
             </div>
 
-            {/* Group Filter */}
-            <div className="flex flex-wrap gap-2">
-              {groups.map((group) => (
-                <button
-                  key={group}
-                  onClick={() => setSelectedGroup(group)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    selectedGroup === group
-                      ? 'bg-primary-600 text-white'
-                      : 'bg-secondary-100 text-secondary-700 hover:bg-secondary-200'
-                  }`}
-                >
-                  {group}
-                </button>
-              ))}
-            </div>
+            {/* Filter Row */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              {/* Group Filter */}
+              <div className="flex-1">
+                <label className="block text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-2">
+                  Category
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {groups.map((group) => (
+                    <button
+                      key={group}
+                      onClick={() => setSelectedGroup(group)}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        selectedGroup === group
+                          ? 'bg-primary-600 text-white shadow-md shadow-primary-500/25'
+                          : 'bg-secondary-100 dark:bg-secondary-700 text-secondary-700 dark:text-secondary-300 hover:bg-secondary-200 dark:hover:bg-secondary-600'
+                      }`}
+                    >
+                      {group}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-            {/* Difficulty Filter */}
-            <div className="flex flex-wrap gap-2">
-              {difficulties.map((difficulty) => (
-                <button
-                  key={difficulty}
-                  onClick={() => setSelectedDifficulty(difficulty)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    selectedDifficulty === difficulty
-                      ? 'bg-primary-600 text-white'
-                      : 'bg-secondary-100 text-secondary-700 hover:bg-secondary-200'
-                  }`}
-                >
-                  {difficultyLabels[difficulty]}
-                </button>
-              ))}
+              {/* Difficulty Filter */}
+              <div className="sm:flex-shrink-0">
+                <label className="block text-xs font-medium text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-2">
+                  Difficulty
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {difficulties.map((difficulty) => (
+                    <button
+                      key={difficulty}
+                      onClick={() => setSelectedDifficulty(difficulty)}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        selectedDifficulty === difficulty
+                          ? 'bg-primary-600 text-white shadow-md shadow-primary-500/25'
+                          : 'bg-secondary-100 dark:bg-secondary-700 text-secondary-700 dark:text-secondary-300 hover:bg-secondary-200 dark:hover:bg-secondary-600'
+                      }`}
+                    >
+                      {difficultyLabels[difficulty]}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -169,7 +182,7 @@ export default function ConceptsPage() {
           <CardContent>
             <div className="text-center py-12">
               <svg
-                className="w-16 h-16 text-secondary-300 mx-auto mb-4"
+                className="w-16 h-16 text-secondary-300 dark:text-secondary-600 mx-auto mb-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -181,8 +194,8 @@ export default function ConceptsPage() {
                   d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              <h3 className="text-lg font-medium text-secondary-900 mb-2">No concepts found</h3>
-              <p className="text-secondary-600">
+              <h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-2">No concepts found</h3>
+              <p className="text-secondary-600 dark:text-secondary-400">
                 Try adjusting your search or filter criteria.
               </p>
             </div>
@@ -198,7 +211,7 @@ export default function ConceptsPage() {
 
       {/* Results count */}
       {!conceptsLoading && filteredConcepts.length > 0 && (
-        <p className="text-sm text-secondary-500 mt-6 text-center">
+        <p className="text-sm text-secondary-500 dark:text-secondary-400 mt-6 text-center">
           Showing {filteredConcepts.length} of {concepts.length} concepts
         </p>
       )}

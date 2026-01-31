@@ -129,7 +129,7 @@ export default function RecordPage() {
           <CardContent>
             <div className="text-center py-12">
               <svg
-                className="w-16 h-16 text-secondary-300 mx-auto mb-4"
+                className="w-16 h-16 text-secondary-300 dark:text-secondary-600 mx-auto mb-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -141,8 +141,8 @@ export default function RecordPage() {
                   d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              <h3 className="text-lg font-medium text-secondary-900 mb-2">Concept not found</h3>
-              <p className="text-secondary-600 mb-4">
+              <h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-2">Concept not found</h3>
+              <p className="text-secondary-600 dark:text-secondary-400 mb-4">
                 The concept you&apos;re looking for doesn&apos;t exist.
               </p>
               <Link href="/concepts">
@@ -161,12 +161,12 @@ export default function RecordPage() {
       <nav className="mb-6">
         <ol className="flex items-center gap-2 text-sm">
           <li>
-            <Link href="/concepts" className="text-primary-600 hover:underline">
+            <Link href="/concepts" className="text-primary-600 dark:text-primary-400 hover:underline">
               Concepts
             </Link>
           </li>
-          <li className="text-secondary-400">/</li>
-          <li className="text-secondary-600">{concept.title}</li>
+          <li className="text-secondary-400 dark:text-secondary-500">/</li>
+          <li className="text-secondary-600 dark:text-secondary-400">{concept.title}</li>
         </ol>
       </nav>
 
@@ -182,16 +182,16 @@ export default function RecordPage() {
                 <Badge variant="default">{concept.group}</Badge>
               </div>
 
-              <h1 className="text-2xl font-bold text-secondary-900 mb-4">
+              <h1 className="text-2xl font-bold text-secondary-900 dark:text-white mb-4">
                 {concept.title}
               </h1>
 
-              <p className="text-secondary-600 mb-6">{concept.description}</p>
+              <p className="text-secondary-600 dark:text-secondary-400 mb-6">{concept.description}</p>
 
               {/* Tips */}
-              <div className="mt-6 pt-6 border-t border-secondary-100">
-                <h3 className="font-medium text-secondary-900 mb-3">Recording Tips</h3>
-                <ul className="space-y-2 text-sm text-secondary-600">
+              <div className="mt-6 pt-6 border-t border-secondary-100 dark:border-secondary-700">
+                <h3 className="font-medium text-secondary-900 dark:text-white mb-3">Recording Tips</h3>
+                <ul className="space-y-2 text-sm text-secondary-600 dark:text-secondary-400">
                   <li className="flex items-start gap-2">
                     <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -236,9 +236,9 @@ export default function RecordPage() {
                 <Card>
                   <CardContent>
                     <div className="text-center py-12">
-                      <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <div className="w-20 h-20 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center mx-auto mb-6">
                         <svg
-                          className="w-10 h-10 text-green-600"
+                          className="w-10 h-10 text-green-600 dark:text-green-400"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -251,15 +251,15 @@ export default function RecordPage() {
                           />
                         </svg>
                       </div>
-                      <h2 className="text-2xl font-bold text-secondary-900 mb-2">
+                      <h2 className="text-2xl font-bold text-secondary-900 dark:text-white mb-2">
                         Recording Submitted!
                       </h2>
-                      <p className="text-secondary-600 mb-8">
+                      <p className="text-secondary-600 dark:text-secondary-400 mb-8">
                         Your answer has been saved successfully. Would you like to get AI feedback?
                       </p>
                       
                       {analyzeStatus === 'error' && (
-                        <div className="mb-6 p-4 bg-red-50 rounded-lg text-red-700 text-sm">
+                        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg text-red-700 dark:text-red-400 text-sm">
                           Failed to analyze recording. Please try again.
                         </div>
                       )}
@@ -277,10 +277,10 @@ export default function RecordPage() {
                         </Button>
                       </div>
 
-                      <div className="mt-6 pt-6 border-t border-secondary-100">
+                      <div className="mt-6 pt-6 border-t border-secondary-100 dark:border-secondary-700">
                         <button
                           onClick={handleRecordAnother}
-                          className="text-sm text-primary-600 hover:underline"
+                          className="text-sm text-primary-600 dark:text-primary-400 hover:underline"
                         >
                           Or record another answer
                         </button>
@@ -304,8 +304,8 @@ export default function RecordPage() {
                     <CardContent>
                       <div className="flex items-center justify-between">
                         <div>
-                          <h3 className="font-medium text-secondary-900">Ready to Submit</h3>
-                          <p className="text-sm text-secondary-600">
+                          <h3 className="font-medium text-secondary-900 dark:text-white">Ready to Submit</h3>
+                          <p className="text-sm text-secondary-600 dark:text-secondary-400">
                             Duration: {Math.floor(recordedDuration / 60)}:
                             {(recordedDuration % 60).toString().padStart(2, '0')}
                           </p>
@@ -320,7 +320,7 @@ export default function RecordPage() {
                       </div>
 
                       {uploadStatus === 'error' && (
-                        <div className="mt-4 p-4 bg-red-50 rounded-lg text-red-700 text-sm">
+                        <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg text-red-700 dark:text-red-400 text-sm">
                           Failed to upload recording. Please try again.
                         </div>
                       )}
