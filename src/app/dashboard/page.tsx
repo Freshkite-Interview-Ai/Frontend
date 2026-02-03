@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { DashboardLayout, PageHeader } from '@/components/layout';
 import { Card, CardContent, Button, LoadingPage, Badge } from '@/components/ui';
 import { useAppStore } from '@/store';
+import { usePlanGuard } from '@/hooks';
 import { resumeService, analyticsService } from '@/services';
 import { UserAnalytics } from '@/types';
 
@@ -79,6 +80,7 @@ export default function DashboardPage() {
   const { resume, setResume, setResumeLoading } = useAppStore();
   const [analytics, setAnalytics] = useState<UserAnalytics | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
+  const { isChecking: isPlanChecking } = usePlanGuard('basic');
   
   const isLoading = status === 'loading';
   const isAuthenticated = status === 'authenticated';
@@ -117,7 +119,7 @@ export default function DashboardPage() {
     loadData();
   }, [isAuthenticated, setResume, setResumeLoading]);
 
-  if (isLoading) {
+  if (isLoading || isPlanChecking) {
     return <LoadingPage message="Loading dashboard..." />;
   }
 

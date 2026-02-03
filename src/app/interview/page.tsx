@@ -9,11 +9,13 @@ import { Card, CardContent, Button, LoadingSpinner, Badge } from '@/components/u
 import { useAppStore } from '@/store';
 import { Interview } from '@/types';
 import { interviewService } from '@/services';
+import { usePlanGuard } from '@/hooks';
 
 export default function InterviewPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const { resume, currentInterview, setCurrentInterview, interviews, interviewLoading, setInterviewLoading } = useAppStore();
+  const { isChecking: isPlanChecking } = usePlanGuard('pro');
   
   const isAuthenticated = status === 'authenticated';
   const authLoading = status === 'loading';
@@ -85,7 +87,7 @@ export default function InterviewPage() {
     }
   };
 
-  if (authLoading) {
+  if (authLoading || isPlanChecking) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[400px]">

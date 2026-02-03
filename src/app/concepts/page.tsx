@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react';
 import { DashboardLayout, PageHeader } from '@/components/layout';
 import { Card, CardContent, Button, LoadingSpinner, Badge, Input } from '@/components/ui';
 import { ConceptCard } from '@/components/features';
-import { useApi } from '@/hooks';
+import { useApi, usePlanGuard } from '@/hooks';
 import { useAppStore } from '@/store';
 import { conceptService } from '@/services';
 import { Concept, ConceptDifficulty } from '@/types';
@@ -28,6 +28,7 @@ export default function ConceptsPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const { concepts, setConcepts, conceptsLoading, setConceptsLoading } = useAppStore();
+  const { isChecking: isPlanChecking } = usePlanGuard('basic');
 
   const isAuthenticated = status === 'authenticated';
   const authLoading = status === 'loading';
@@ -78,7 +79,7 @@ export default function ConceptsPage() {
     return matchesSearch;
   });
 
-  if (authLoading) {
+  if (authLoading || isPlanChecking) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[400px]">

@@ -1,14 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { DashboardLayout, PageHeader } from '@/components/layout';
 import { Card, CardContent, Button, LoadingPage, Badge } from '@/components/ui';
-import { analyticsService } from '@/services';
-import { UserAnalyticsWithDetails, PracticedConcept } from '@/types';
+import { analyticsService, userService } from '@/services';
+import { useAuthStore } from '@/store';
+import { usePlanGuard } from '@/hooks';
+import { UserAnalyticsWithDetails, PracticedConcept, Plan } from '@/types';
 
 interface StatItem {
   label: string;
@@ -36,10 +38,26 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'activity' | 'achievements'>('overview');
   const [analytics, setAnalytics] = useState<UserAnalyticsWithDetails | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
+  const { user: storedUser, setUser } = useAuthStore();
+  const { isChecking: isPlanChecking } = usePlanGuard('none');
 
   const isLoading = status === 'loading';
   const isAuthenticated = status === 'authenticated';
   const user = session?.user;
+
+  const planLabel = useMemo(() => {
+    if (!storedUser?.plan) return 'No Plan';
+    const normalized = storedUser.plan.toString().toLowerCase();
+    if (normalized === 'basic') return 'Basic Plan';
+    if (normalized === 'pro') return 'Pro Plan';
+    return `${storedUser.plan} Plan`;
+  }, [storedUser?.plan]);
+
+  const planStatus = useMemo(() => {
+    if (!storedUser?.plan) return 'Inactive';
+    if (!storedUser?.isPaid) return 'Inactive';
+    return 'Active';
+  }, [storedUser?.isPaid, storedUser?.plan]);
 
   // Load analytics data
   useEffect(() => {
@@ -60,7 +78,28 @@ export default function ProfilePage() {
     loadAnalytics();
   }, [isAuthenticated]);
 
-  if (isLoading) {
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      if (!isAuthenticated) return;
+
+      if (storedUser?.plan !== undefined && storedUser?.isPaid !== undefined) {
+        return;
+      }
+
+      try {
+        const response = await userService.getMe();
+        if (response?.data) {
+          setUser(response.data);
+        }
+      } catch (error) {
+        console.error('Failed to load profile:', error);
+      }
+    };
+
+    loadUserProfile();
+  }, [isAuthenticated, setUser, storedUser?.isPaid, storedUser?.plan]);
+
+  if (isLoading || isPlanChecking) {
     return <LoadingPage message="Loading profile..." />;
   }
 
@@ -179,16 +218,25 @@ export default function ProfilePage() {
                       {user?.email}
                     </p>
                     <div className="flex items-center gap-2 mt-2">
-                      <Badge variant="primary">Pro Member</Badge>
-                      <Badge variant="success">Active</Badge>
+                      <Badge variant="primary">{planLabel}</Badge>
+                      <Badge variant={planStatus === 'Active' ? 'success' : 'warning'}>
+                        {planStatus}
+                      </Badge>
                     </div>
                   </div>
-                  <Link href="/settings">
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <EditIcon />
-                      Edit Profile
-                    </Button>
-                  </Link>
+                  <div className="flex flex-wrap gap-2">
+                    <Link href="/plan">
+                      <Button variant="secondary" size="sm">
+                        Upgrade Plan
+                      </Button>
+                    </Link>
+                    <Link href="/settings">
+                      <Button variant="outline" size="sm" className="gap-2">
+                        <EditIcon />
+                        Edit Profile
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               </div>
             </div>

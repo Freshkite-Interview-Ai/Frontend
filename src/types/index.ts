@@ -1,4 +1,6 @@
 // User Types
+export type Plan = 'basic' | 'pro';
+
 export interface User {
   id: string;
   email: string;
@@ -6,6 +8,8 @@ export interface User {
   lastName: string;
   username: string;
   avatar?: string;
+  isPaid?: boolean;
+  plan?: Plan | null;
   createdAt?: string;
 }
 

@@ -17,7 +17,7 @@ export default function LoginPage() {
 
   // Redirect if already authenticated
   if (status === 'authenticated') {
-    router.push('/dashboard');
+    router.push('/auth/callback');
     return null;
   }
 
