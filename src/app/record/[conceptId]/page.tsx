@@ -74,11 +74,11 @@ export default function RecordPage() {
   };
 
   const handleAnalyze = async () => {
-    if (!uploadedAudioId) return;
+    if (!uploadedAudioId || !concept) return;
 
     setAnalyzeStatus('analyzing');
     try {
-      const response = await interviewService.analyzeAudio(uploadedAudioId);
+      const response = await interviewService.analyzeAudio(uploadedAudioId, concept.description);
       setReport(response.data);
       setAnalyzeStatus('success');
     } catch (error) {

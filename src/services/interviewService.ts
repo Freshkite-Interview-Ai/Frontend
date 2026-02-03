@@ -35,9 +35,10 @@ export const interviewService = {
   },
 
   // Analyze an audio recording and generate a report
-  analyzeAudio: async (audioId: string): Promise<ApiResponse<AudioReport>> => {
+  analyzeAudio: async (audioId: string, conceptDescription?: string): Promise<ApiResponse<AudioReport>> => {
     const response = await apiClient.post<ApiResponse<AudioReport>>('/interview/analyze', {
       audioId,
+      conceptDescription,
     });
     return response.data;
   },
