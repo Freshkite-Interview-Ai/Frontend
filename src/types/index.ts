@@ -8,6 +8,18 @@ export interface User {
   lastName: string;
   username: string;
   avatar?: string;
+  displayName?: string;
+  bio?: string;
+  location?: string;
+  themePreference?: 'light' | 'dark';
+  emailNotifications?: boolean;
+  pushNotifications?: boolean;
+  weeklyDigest?: boolean;
+  interviewReminders?: boolean;
+  practiceReminders?: boolean;
+  profileVisibility?: 'public' | 'private';
+  showActivity?: boolean;
+  showAchievements?: boolean;
   isPaid?: boolean;
   plan?: Plan | null;
   createdAt?: string;

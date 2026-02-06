@@ -1,12 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { DashboardLayout } from '@/components/layout';
 import { Card, CardContent, Button, LoadingPage, Badge } from '@/components/ui';
 import { useTheme } from '@/components/providers';
+import { userService } from '@/services/userService';
+import { User } from '@/types';
 
 interface SettingSection {
   id: string;
@@ -103,6 +105,13 @@ export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const [activeSection, setActiveSection] = useState('profile');
   
+  // Loading and error states
+  const [isLoadingData, setIsLoadingData] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [userData, setUserData] = useState<User | null>(null);
+  
   // Form states
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
@@ -124,7 +133,181 @@ export default function SettingsPage() {
   const isAuthenticated = status === 'authenticated';
   const user = session?.user;
 
-  if (isLoading) {
+  // Load user settings on mount
+  useEffect(() => {
+    async function loadUserSettings() {
+      if (!isAuthenticated) return;
+      
+      try {
+        setIsLoadingData(true);
+        setError(null);
+        const response = await userService.getMe();
+        const data = response.data;
+        setUserData(data);
+        
+        // Initialize form state from loaded data
+        setDisplayName(data.displayName || data.firstName || '');
+        setBio(data.bio || '');
+        setLocation(data.location || '');
+        setEmailNotifications(data.emailNotifications ?? true);
+        setPushNotifications(data.pushNotifications ?? true);
+        setWeeklyDigest(data.weeklyDigest ?? false);
+        setInterviewReminders(data.interviewReminders ?? true);
+        setPracticeReminders(data.practiceReminders ?? true);
+        setProfileVisibility(data.profileVisibility || 'public');
+        setShowActivity(data.showActivity ?? true);
+        setShowAchievements(data.showAchievements ?? true);
+      } catch (err) {
+        console.error('Failed to load user settings:', err);
+        setError('Failed to load settings. Please try again.');
+      } finally {
+        setIsLoadingData(false);
+      }
+    }
+    
+    loadUserSettings();
+  }, [isAuthenticated]);
+
+  // Save handlers
+  const handleSaveProfile = async () => {
+    try {
+      setIsSaving(true);
+      setError(null);
+      await userService.updateMe({
+        displayName,
+        bio,
+        location,
+      });
+      setSuccessMessage('Profile updated successfully!');
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      console.error('Failed to save profile:', err);
+      setError('Failed to save profile. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveNotifications = async () => {
+    try {
+      setIsSaving(true);
+      setError(null);
+      await userService.updateMe({
+        emailNotifications,
+        pushNotifications,
+        weeklyDigest,
+        interviewReminders,
+        practiceReminders,
+      });
+      setSuccessMessage('Notification preferences updated!');
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      console.error('Failed to save notifications:', err);
+      setError('Failed to save notification settings. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSavePrivacy = async () => {
+    try {
+      setIsSaving(true);
+      setError(null);
+      await userService.updateMe({
+        profileVisibility,
+        showActivity,
+        showAchievements,
+      });
+      setSuccessMessage('Privacy settings updated!');
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      console.error('Failed to save privacy settings:', err);
+      setError('Failed to save privacy settings. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveTheme = async (newTheme: 'light' | 'dark') => {
+    try {
+      setTheme(newTheme);
+      await userService.updateMe({
+        themePreference: newTheme,
+      });
+    } catch (err) {
+      console.error('Failed to save theme:', err);
+    }
+  };
+
+  const handleExportData = async () => {
+    try {
+      setIsSaving(true);
+      setError(null);
+      const response = await userService.exportMyData();
+      
+      // Download as JSON file
+      const dataStr = JSON.stringify(response.data, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `interview-app-data-${new Date().toISOString().split('T')[0]}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      
+      setSuccessMessage('Data exported successfully!');
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      console.error('Failed to export data:', err);
+      setError('Failed to export data. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleClearHistory = async () => {
+    if (!confirm('Are you sure you want to clear all practice history? This action cannot be undone.')) {
+      return;
+    }
+    
+    try {
+      setIsSaving(true);
+      setError(null);
+      await userService.clearPracticeHistory();
+      setSuccessMessage('Practice history cleared successfully!');
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      console.error('Failed to clear history:', err);
+      setError('Failed to clear practice history. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    const confirmed = confirm(
+      'Are you sure you want to delete your account? This will permanently delete all your data and cannot be undone.'
+    );
+    if (!confirmed) return;
+    
+    const doubleConfirm = confirm(
+      'This is your last chance. Type "DELETE" in the next prompt to confirm account deletion.'
+    );
+    if (!doubleConfirm) return;
+    
+    try {
+      setIsSaving(true);
+      setError(null);
+      await userService.deleteAccount();
+      router.push('/login');
+    } catch (err) {
+      console.error('Failed to delete account:', err);
+      setError('Failed to delete account. Please try again.');
+      setIsSaving(false);
+    }
+  };
+
+  if (isLoading || isLoadingData) {
     return <LoadingPage message="Loading settings..." />;
   }
 
@@ -227,8 +410,10 @@ export default function SettingsPage() {
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t border-secondary-200 dark:border-secondary-700">
-        <Button variant="outline">Cancel</Button>
-        <Button>Save Changes</Button>
+        <Button variant="outline" disabled={isSaving}>Cancel</Button>
+        <Button onClick={handleSaveProfile} disabled={isSaving}>
+          {isSaving ? 'Saving...' : 'Save Changes'}
+        </Button>
       </div>
     </div>
   );
@@ -248,7 +433,7 @@ export default function SettingsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {/* Light Theme */}
           <button
-            onClick={() => setTheme('light')}
+            onClick={() => handleSaveTheme('light')}
             className={`relative p-4 rounded-2xl border-2 transition-all duration-200 ${
               theme === 'light'
                 ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
@@ -272,7 +457,7 @@ export default function SettingsPage() {
 
           {/* Dark Theme */}
           <button
-            onClick={() => setTheme('dark')}
+            onClick={() => handleSaveTheme('dark')}
             className={`relative p-4 rounded-2xl border-2 transition-all duration-200 ${
               theme === 'dark'
                 ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
@@ -393,8 +578,10 @@ export default function SettingsPage() {
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t border-secondary-200 dark:border-secondary-700">
-        <Button variant="outline">Reset to Default</Button>
-        <Button>Save Preferences</Button>
+        <Button variant="outline" disabled={isSaving}>Reset to Default</Button>
+        <Button onClick={handleSaveNotifications} disabled={isSaving}>
+          {isSaving ? 'Saving...' : 'Save Preferences'}
+        </Button>
       </div>
     </div>
   );
@@ -504,7 +691,9 @@ export default function SettingsPage() {
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t border-secondary-200 dark:border-secondary-700">
-        <Button>Save Privacy Settings</Button>
+        <Button onClick={handleSavePrivacy} disabled={isSaving}>
+          {isSaving ? 'Saving...' : 'Save Privacy Settings'}
+        </Button>
       </div>
     </div>
   );
@@ -545,14 +734,18 @@ export default function SettingsPage() {
               <p className="font-medium text-secondary-900 dark:text-white">Export Your Data</p>
               <p className="text-sm text-secondary-500 dark:text-secondary-400">Download a copy of all your data</p>
             </div>
-            <Button size="sm" variant="outline">Export</Button>
+            <Button size="sm" variant="outline" onClick={handleExportData} disabled={isSaving}>
+              {isSaving ? 'Exporting...' : 'Export'}
+            </Button>
           </div>
           <div className="flex items-center justify-between p-4 bg-white dark:bg-secondary-800 rounded-xl border border-secondary-200 dark:border-secondary-600">
             <div>
               <p className="font-medium text-secondary-900 dark:text-white">Clear Practice History</p>
               <p className="text-sm text-secondary-500 dark:text-secondary-400">Remove all practice session data</p>
             </div>
-            <Button size="sm" variant="outline">Clear</Button>
+            <Button size="sm" variant="outline" onClick={handleClearHistory} disabled={isSaving}>
+              {isSaving ? 'Clearing...' : 'Clear'}
+            </Button>
           </div>
         </div>
       </div>
@@ -565,7 +758,9 @@ export default function SettingsPage() {
             <p className="font-medium text-secondary-900 dark:text-white">Delete Account</p>
             <p className="text-sm text-secondary-500 dark:text-secondary-400">Permanently delete your account and all data</p>
           </div>
-          <Button size="sm" variant="danger">Delete Account</Button>
+          <Button size="sm" variant="danger" onClick={handleDeleteAccount} disabled={isSaving}>
+            {isSaving ? 'Deleting...' : 'Delete Account'}
+          </Button>
         </div>
       </div>
     </div>
@@ -598,6 +793,34 @@ export default function SettingsPage() {
             Manage your account settings and preferences
           </p>
         </div>
+
+        {/* Success Message */}
+        {successMessage && (
+          <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl flex items-center gap-3">
+            <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p className="text-green-700 dark:text-green-300 font-medium">{successMessage}</p>
+          </div>
+        )}
+
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-center gap-3">
+            <svg className="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p className="text-red-700 dark:text-red-300 font-medium">{error}</p>
+            <button 
+              onClick={() => setError(null)} 
+              className="ml-auto text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        )}
 
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Sidebar */}
