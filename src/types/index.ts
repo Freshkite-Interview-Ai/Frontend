@@ -69,6 +69,8 @@ export interface Resume {
 }
 
 // Interview Types
+export type InterviewDifficulty = 'Beginner' | 'Intermediate' | 'Advanced';
+
 export interface Interview {
   id: string;
   userId: string;
@@ -85,6 +87,38 @@ export interface InterviewSession {
   currentQuestionIndex: number;
   totalQuestions: number;
   status: 'active' | 'paused' | 'completed';
+}
+
+export interface InterviewStartResponse {
+  interviewId?: string;
+  role?: string;
+  status?: string;
+  startedAt?: string;
+  createdAt?: string;
+  id?: string;
+  questionCount?: number;
+  difficulty?: InterviewDifficulty;
+  currentQuestionIndex?: number;
+}
+
+export interface InterviewQuestionResponse {
+  question: string;
+}
+
+export interface InterviewEvaluation {
+  question: string;
+  technical: number;
+  clarity: number;
+  confidence: number;
+  summary: string;
+}
+
+export interface InterviewFinalReport {
+  overallScore: number;
+  strengths: string[];
+  weaknesses: string[];
+  skillAuthenticity: string;
+  decision: 'Hire' | 'No Hire';
 }
 
 // API Response Types
