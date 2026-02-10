@@ -1,5 +1,22 @@
 import apiClient from './api';
-import { ConceptAnswer, ApiResponse } from '@/types';
+import { ConceptAnswer, ApiResponse, PaginatedResponse } from '@/types';
+
+export interface ReportWithConcept {
+  id: string;
+  audioId: string;
+  overallRating: number;
+  strengths: string[];
+  missedPoints: string[];
+  improvements: string[];
+  communicationFeedback: string;
+  transcript: string | null;
+  createdAt: string;
+  concept: {
+    id: string;
+    title: string;
+    difficulty: string;
+  } | null;
+}
 
 export const audioService = {
   // Upload audio recording for a concept
@@ -34,6 +51,14 @@ export const audioService = {
   // Get all audio recordings for current user
   getMyRecordings: async (): Promise<ApiResponse<ConceptAnswer[]>> => {
     const response = await apiClient.get<ApiResponse<ConceptAnswer[]>>('/audio/my');
+    return response.data;
+  },
+
+  // Get user's reports with concept details
+  getMyReports: async (page = 1, limit = 10): Promise<PaginatedResponse<ReportWithConcept>> => {
+    const response = await apiClient.get<PaginatedResponse<ReportWithConcept>>(
+      `/audio/reports?page=${page}&limit=${limit}`
+    );
     return response.data;
   },
 

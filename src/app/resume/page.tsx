@@ -123,9 +123,9 @@ export default function ResumePage() {
               <CardContent>
                 <div className="flex items-start gap-6">
                   {/* PDF Icon */}
-                  <div className="w-16 h-20 bg-red-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <div className="w-16 h-20 bg-red-50 dark:bg-red-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
                     <svg
-                      className="w-10 h-10 text-red-500"
+                      className="w-10 h-10 text-red-500 dark:text-red-400"
                       fill="currentColor"
                       viewBox="0 0 24 24"
                     >
@@ -137,8 +137,8 @@ export default function ResumePage() {
                   <div className="flex-1">
                     <div className="flex items-start justify-between">
                       <div>
-                        <h3 className="font-semibold text-secondary-900">{resume.fileName}</h3>
-                        <p className="text-sm text-secondary-600 mt-1">
+                        <h3 className="font-semibold text-secondary-900 dark:text-white">{resume.fileName}</h3>
+                        <p className="text-sm text-secondary-600 dark:text-secondary-400 mt-1">
                           {formatFileSize(resume.fileSize)} • Uploaded{' '}
                           {new Date(resume.uploadedAt).toLocaleDateString()}
                         </p>
@@ -178,7 +178,7 @@ export default function ResumePage() {
                         size="sm"
                         onClick={handleDelete}
                         disabled={resumeLoading}
-                        className="text-red-600 hover:bg-red-50"
+                        className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30"
                       >
                         <svg
                           className="w-4 h-4 mr-2"
@@ -212,11 +212,11 @@ export default function ResumePage() {
                 />
 
                 {selectedFile && uploadStatus !== 'success' && (
-                  <div className="mt-6 flex items-center justify-between p-4 bg-secondary-50 rounded-xl">
+                  <div className="mt-6 flex items-center justify-between p-4 bg-secondary-50 dark:bg-secondary-700/50 rounded-xl">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                      <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
                         <svg
-                          className="w-6 h-6 text-red-500"
+                          className="w-6 h-6 text-red-500 dark:text-red-400"
                           fill="currentColor"
                           viewBox="0 0 24 24"
                         >
@@ -224,8 +224,8 @@ export default function ResumePage() {
                         </svg>
                       </div>
                       <div>
-                        <p className="font-medium text-secondary-900">{selectedFile.name}</p>
-                        <p className="text-sm text-secondary-500">
+                        <p className="font-medium text-secondary-900 dark:text-white">{selectedFile.name}</p>
+                        <p className="text-sm text-secondary-500 dark:text-secondary-400">
                           {formatFileSize(selectedFile.size)}
                         </p>
                       </div>
@@ -241,7 +241,7 @@ export default function ResumePage() {
                 )}
 
                 {uploadStatus === 'error' && (
-                  <div className="mt-4 p-4 bg-red-50 rounded-xl text-red-700 text-sm">
+                  <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-red-700 dark:text-red-400 text-sm">
                     {errorMessage}
                   </div>
                 )}
@@ -254,12 +254,12 @@ export default function ResumePage() {
         <div className="lg:col-span-1">
           <Card>
             <CardContent>
-              <h3 className="font-semibold text-secondary-900 mb-4">Why Upload Your Resume?</h3>
+              <h3 className="font-semibold text-secondary-900 dark:text-white mb-4">Why Upload Your Resume?</h3>
               <ul className="space-y-4">
                 <li className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900/50 rounded-lg flex items-center justify-center flex-shrink-0">
                     <svg
-                      className="w-5 h-5 text-primary-600"
+                      className="w-5 h-5 text-primary-600 dark:text-primary-400"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -273,16 +273,16 @@ export default function ResumePage() {
                     </svg>
                   </div>
                   <div>
-                    <h4 className="font-medium text-secondary-900">Personalized Questions</h4>
-                    <p className="text-sm text-secondary-600 mt-1">
+                    <h4 className="font-medium text-secondary-900 dark:text-white">Personalized Questions</h4>
+                    <p className="text-sm text-secondary-600 dark:text-secondary-400 mt-1">
                       Get interview questions tailored to your experience and skills.
                     </p>
                   </div>
                 </li>
                 <li className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <div className="w-8 h-8 bg-green-100 dark:bg-green-900/50 rounded-lg flex items-center justify-center flex-shrink-0">
                     <svg
-                      className="w-5 h-5 text-green-600"
+                      className="w-5 h-5 text-green-600 dark:text-green-400"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -296,16 +296,16 @@ export default function ResumePage() {
                     </svg>
                   </div>
                   <div>
-                    <h4 className="font-medium text-secondary-900">Skill Gap Analysis</h4>
-                    <p className="text-sm text-secondary-600 mt-1">
+                    <h4 className="font-medium text-secondary-900 dark:text-white">Skill Gap Analysis</h4>
+                    <p className="text-sm text-secondary-600 dark:text-secondary-400 mt-1">
                       Identify areas where you need more practice.
                     </p>
                   </div>
                 </li>
                 <li className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center flex-shrink-0">
                     <svg
-                      className="w-5 h-5 text-blue-600"
+                      className="w-5 h-5 text-blue-600 dark:text-blue-400"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -319,17 +319,17 @@ export default function ResumePage() {
                     </svg>
                   </div>
                   <div>
-                    <h4 className="font-medium text-secondary-900">Secure & Private</h4>
-                    <p className="text-sm text-secondary-600 mt-1">
+                    <h4 className="font-medium text-secondary-900 dark:text-white">Secure & Private</h4>
+                    <p className="text-sm text-secondary-600 dark:text-secondary-400 mt-1">
                       Your resume is encrypted and never shared.
                     </p>
                   </div>
                 </li>
               </ul>
 
-              <div className="mt-6 pt-6 border-t border-secondary-100">
-                <h4 className="font-medium text-secondary-900 mb-2">Supported Formats</h4>
-                <p className="text-sm text-secondary-600">
+              <div className="mt-6 pt-6 border-t border-secondary-100 dark:border-secondary-700">
+                <h4 className="font-medium text-secondary-900 dark:text-white mb-2">Supported Formats</h4>
+                <p className="text-sm text-secondary-600 dark:text-secondary-400">
                   PDF files up to 10MB. We recommend using a clean, ATS-friendly resume format.
                 </p>
               </div>

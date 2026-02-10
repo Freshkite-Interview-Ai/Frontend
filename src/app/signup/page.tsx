@@ -34,7 +34,7 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 dark:from-secondary-900 dark:via-secondary-900 dark:to-secondary-800 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
@@ -55,16 +55,16 @@ export default function SignupPage() {
               </svg>
             </div>
           </Link>
-          <h1 className="text-3xl font-bold text-secondary-900">Create Account</h1>
-          <p className="mt-2 text-secondary-600">
+          <h1 className="text-3xl font-bold text-secondary-900 dark:text-white">Create Account</h1>
+          <p className="mt-2 text-secondary-600 dark:text-secondary-400">
             Start your interview preparation journey
           </p>
         </div>
 
         {/* Signup Card */}
-        <div className="bg-white rounded-2xl shadow-xl border border-secondary-100 p-8">
+        <div className="bg-white dark:bg-secondary-800 rounded-2xl shadow-xl border border-secondary-100 dark:border-secondary-700 p-8">
           <div className="space-y-4">
-            <p className="text-center text-secondary-600 mb-6">
+            <p className="text-center text-secondary-600 dark:text-secondary-400 mb-6">
               Click below to create your account through our secure portal.
             </p>
 
@@ -92,28 +92,28 @@ export default function SignupPage() {
               Create Account
             </Button>
 
-            <p className="text-center text-sm text-secondary-500 mt-4">
+            <p className="text-center text-sm text-secondary-500 dark:text-secondary-400 mt-4">
               You will be redirected to our secure registration portal
             </p>
           </div>
 
           {/* Login Link */}
-          <div className="mt-6 text-center text-sm text-secondary-600">
+          <div className="mt-6 text-center text-sm text-secondary-600 dark:text-secondary-400">
             Already have an account?{' '}
-            <Link href="/login" className="text-primary-600 hover:underline font-medium">
+            <Link href="/login" className="text-primary-600 dark:text-primary-400 hover:underline font-medium">
               Sign in
             </Link>
           </div>
         </div>
 
         {/* Footer */}
-        <p className="text-center text-sm text-secondary-500 mt-8">
+        <p className="text-center text-sm text-secondary-500 dark:text-secondary-400 mt-8">
           By signing up, you agree to our{' '}
-          <a href="#" className="text-primary-600 hover:underline">
+          <a href="#" className="text-primary-600 dark:text-primary-400 hover:underline">
             Terms of Service
           </a>{' '}
           and{' '}
-          <a href="#" className="text-primary-600 hover:underline">
+          <a href="#" className="text-primary-600 dark:text-primary-400 hover:underline">
             Privacy Policy
           </a>
         </p>

@@ -4,4 +4,7 @@ export { default as conceptService } from './conceptService';
 export { default as audioService } from './audioService';
 export { default as resumeService } from './resumeService';
 export { default as interviewService } from './interviewService';
+export { default as paymentService } from './paymentService';
+export { default as userService } from './userService';
 export { backendAuthService } from './backendAuth';
+export { analyticsService } from './analyticsService';

@@ -6,7 +6,49 @@ export interface User {
   lastName: string;
   username: string;
   avatar?: string;
+  displayName?: string;
+  bio?: string;
+  location?: string;
+  themePreference?: 'light' | 'dark';
+  emailNotifications?: boolean;
+  pushNotifications?: boolean;
+  weeklyDigest?: boolean;
+  interviewReminders?: boolean;
+  practiceReminders?: boolean;
+  profileVisibility?: 'public' | 'private';
+  showActivity?: boolean;
+  showAchievements?: boolean;
+  isPaid?: boolean;
+  tokenBalance?: number;
   createdAt?: string;
+}
+
+// Token Types
+export interface TokenPack {
+  id: string;
+  name: string;
+  tokens: number;
+  priceINR: number;
+  displayPriceINR: number;
+  popular?: boolean;
+  description: string;
+}
+
+export interface TokenBalance {
+  tokenBalance: number;
+  isPaid: boolean;
+}
+
+export interface TokenTransaction {
+  id: string;
+  userId: string;
+  type: 'credit' | 'debit';
+  operation: string;
+  amount: number;
+  balanceBefore: number;
+  balanceAfter: number;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
 }
 
 export interface AuthState {
@@ -53,6 +95,8 @@ export interface Resume {
 }
 
 // Interview Types
+export type InterviewDifficulty = 'Beginner' | 'Intermediate' | 'Advanced';
+
 export interface Interview {
   id: string;
   userId: string;
@@ -69,6 +113,38 @@ export interface InterviewSession {
   currentQuestionIndex: number;
   totalQuestions: number;
   status: 'active' | 'paused' | 'completed';
+}
+
+export interface InterviewStartResponse {
+  interviewId?: string;
+  role?: string;
+  status?: string;
+  startedAt?: string;
+  createdAt?: string;
+  id?: string;
+  questionCount?: number;
+  difficulty?: InterviewDifficulty;
+  currentQuestionIndex?: number;
+}
+
+export interface InterviewQuestionResponse {
+  question: string;
+}
+
+export interface InterviewEvaluation {
+  question: string;
+  technical: number;
+  clarity: number;
+  confidence: number;
+  summary: string;
+}
+
+export interface InterviewFinalReport {
+  overallScore: number;
+  strengths: string[];
+  weaknesses: string[];
+  skillAuthenticity: string;
+  decision: 'Hire' | 'No Hire';
 }
 
 // API Response Types
@@ -124,3 +200,47 @@ export interface AudioReport {
   transcript: string | null;
   createdAt: string;
 }
+
+// Analytics Types
+export interface UserAnalytics {
+  totalConceptsPracticed: number;
+  totalAttempts: number;
+  totalRecordingMinutes: number;
+  averageRating: number | null;
+  interviewsCompleted: number;
+  currentStreak: number;
+  longestStreak: number;
+  lastActivityAt: string | null;
+}
+
+export interface ConceptPractice {
+  isPracticed: boolean;
+  bestRating: number | null;
+  totalAttempts: number;
+  lastAttemptAt: string | null;
+  firstPracticedAt: string | null;
+}
+
+export interface PracticedConcept {
+  id: string;
+  title: string;
+  bestRating: number;
+  totalAttempts: number;
+  lastAttemptAt: string | null;
+  firstPracticedAt: string | null;
+}
+
+export interface ConceptPracticeWithDetails extends ConceptPractice {
+  concept: {
+    id: string;
+    title: string;
+    description: string;
+    difficulty: string;
+    group: string;
+  };
+}
+
+export interface UserAnalyticsWithDetails extends UserAnalytics {
+  practicedConcepts: PracticedConcept[];
+}
+

@@ -29,6 +29,8 @@ export const useAuth = () => {
         lastName: storedUser.name?.split(' ').slice(1).join(' ') || '',
         username: storedUser.email?.split('@')[0] || '',
         avatar: storedUser.picture || undefined,
+        isPaid: storedUser.isPaid ?? false,
+        tokenBalance: storedUser.tokenBalance ?? 0,
       }
     : session?.user
     ? {
@@ -38,6 +40,8 @@ export const useAuth = () => {
         lastName: session.user.name?.split(' ').slice(1).join(' ') || '',
         username: session.user.email?.split('@')[0] || '',
         avatar: session.user.image || undefined,
+        isPaid: false,
+        tokenBalance: 0,
       }
     : null;
 
@@ -105,7 +109,7 @@ export const useAuth = () => {
     try {
       // Reset exchange attempt flag for new login
       exchangeAttempted.current = false;
-      await signIn('google', { callbackUrl: '/dashboard' });
+      await signIn('google', { callbackUrl: '/auth/callback' });
     } catch (error) {
       console.error('Google login failed:', error);
       throw error;

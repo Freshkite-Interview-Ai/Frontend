@@ -9,7 +9,7 @@ const publicRoutes = ['/', '/login', '/signup'];
 const authRoutes = ['/login', '/signup'];
 
 // Define protected routes that require authentication
-const protectedRoutes = ['/dashboard', '/concepts', '/record', '/resume', '/interview'];
+const protectedRoutes = ['/dashboard', '/concepts', '/record', '/resume', '/interview', '/tokens', '/profile', '/settings'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -31,17 +31,25 @@ export async function middleware(request: NextRequest) {
 
   const isAuthenticated = !!token;
 
-  // Check if route is protected
+  // Check if route is protected (excluding auth/callback which handles its own logic)
   const isProtectedRoute = protectedRoutes.some(
     (route) => pathname === route || pathname.startsWith(route + '/')
   );
 
+  // Auth callback handles its own redirect logic
+  if (pathname === '/auth/callback') {
+    if (!isAuthenticated) {
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
+    return NextResponse.next();
+  }
+
   // Check if route is an auth route (login/signup)
   const isAuthRoute = authRoutes.includes(pathname);
 
-  // Redirect authenticated users away from auth routes
+  // Redirect authenticated users away from auth routes to auth/callback for proper routing
   if (isAuthenticated && isAuthRoute) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    return NextResponse.redirect(new URL('/auth/callback', request.url));
   }
 
   // Redirect unauthenticated users to login for protected routes

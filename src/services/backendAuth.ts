@@ -20,6 +20,8 @@ export interface StoredUser {
   email: string;
   name: string;
   picture?: string;
+  isPaid?: boolean;
+  tokenBalance?: number;
 }
 
 /**
