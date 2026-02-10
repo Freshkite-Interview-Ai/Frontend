@@ -244,3 +244,32 @@ export interface UserAnalyticsWithDetails extends UserAnalytics {
   practicedConcepts: PracticedConcept[];
 }
 
+// Problem Solving Types
+export type ProblemDifficulty = 'Easy' | 'Medium' | 'Hard';
+export type ProblemStatusValue = 'pass' | 'fail' | 'completed';
+
+export interface Problem {
+  id: string;
+  title: string;
+  category: string;
+  difficulty: ProblemDifficulty;
+  leetcodeUrl: string;
+  tags: string[];
+  isNew: boolean;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UserProblemStatus {
+  id: string;
+  userId: string;
+  problemId: string;
+  status: ProblemStatusValue;
+  updatedAt: string;
+}
+
+export interface ProblemsByCategory {
+  [category: string]: Problem[];
+}
+

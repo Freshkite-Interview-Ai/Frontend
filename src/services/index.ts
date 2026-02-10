@@ -8,3 +8,4 @@ export { default as paymentService } from './paymentService';
 export { default as userService } from './userService';
 export { backendAuthService } from './backendAuth';
 export { analyticsService } from './analyticsService';
+export { default as problemService } from './problemService';

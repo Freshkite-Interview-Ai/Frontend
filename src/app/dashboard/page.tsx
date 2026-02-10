@@ -39,6 +39,23 @@ const quickActions: QuickAction[] = [
     darkColor: 'dark:from-primary-900/50 dark:to-primary-800/50 dark:text-primary-400',
   },
   {
+    title: 'Solve Problems',
+    description: 'Track LeetCode-style algorithm problems',
+    href: '/problems',
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+        />
+      </svg>
+    ),
+    color: 'bg-gradient-to-br from-purple-100 to-purple-200 text-purple-600',
+    darkColor: 'dark:from-purple-900/50 dark:to-purple-800/50 dark:text-purple-400',
+  },
+  {
     title: 'Upload Resume',
     description: 'Add your resume for personalized questions',
     href: '/resume',
@@ -271,7 +288,7 @@ export default function DashboardPage() {
       {/* Quick Actions */}
       <div className="mb-8">
         <h2 className="text-lg font-semibold text-secondary-900 dark:text-white mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {quickActions.map((action) => (
             <Link key={action.href} href={action.href}>
               <Card hover className="h-full bg-white dark:bg-secondary-800 border-secondary-200 dark:border-secondary-700 group">
