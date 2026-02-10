@@ -54,12 +54,12 @@ export default function AuthCallbackPage() {
         }
 
         const isPaid = response?.data?.isPaid ?? false;
-        const plan = response?.data?.plan ?? null;
+        const tokenBalance = response?.data?.tokenBalance ?? 0;
 
         hasRedirected = true;
 
-        if (!isPaid || !plan) {
-          router.replace('/plan');
+        if (!isPaid || tokenBalance <= 0) {
+          router.replace('/tokens');
         } else {
           router.replace('/dashboard');
         }

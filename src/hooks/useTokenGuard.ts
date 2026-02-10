@@ -5,17 +5,15 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useAuthStore } from '@/store';
 import { userService, backendAuthService } from '@/services';
-import { Plan } from '@/types';
 
-export type PlanRequirement = 'none' | 'basic' | 'pro';
-
-interface UsePlanGuardResult {
+interface UseTokenGuardResult {
   isChecking: boolean;
-  userPlan: Plan | null;
+  tokenBalance: number;
   isPaid: boolean;
+  hasTokens: boolean;
 }
 
-export const usePlanGuard = (required: PlanRequirement): UsePlanGuardResult => {
+export const useTokenGuard = (): UseTokenGuardResult => {
   const router = useRouter();
   const { status } = useSession();
   const { user, setUser } = useAuthStore();
@@ -80,24 +78,19 @@ export const usePlanGuard = (required: PlanRequirement): UsePlanGuardResult => {
   useEffect(() => {
     if (isChecking || !hasLoadedProfile) return;
 
-    const isPaid = user?.isPaid ?? false;
-    const plan = user?.plan ?? null;
+    const tokenBalance = user?.tokenBalance ?? 0;
 
-    if (required === 'basic' && !isPaid) {
-      router.replace('/plan');
-      return;
+    if (tokenBalance <= 0) {
+      router.replace('/tokens');
     }
-
-    if (required === 'pro' && (!isPaid || plan !== 'pro')) {
-      router.replace('/plan');
-    }
-  }, [isChecking, required, router, user?.isPaid, user?.plan]);
+  }, [isChecking, hasLoadedProfile, router, user?.tokenBalance]);
 
   return {
     isChecking,
-    userPlan: user?.plan ?? null,
+    tokenBalance: user?.tokenBalance ?? 0,
     isPaid: user?.isPaid ?? false,
+    hasTokens: (user?.tokenBalance ?? 0) > 0,
   };
 };
 
-export default usePlanGuard;
+export default useTokenGuard;

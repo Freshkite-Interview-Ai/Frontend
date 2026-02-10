@@ -1,12 +1,14 @@
 import apiClient from './api';
-import { ApiResponse, Plan, User } from '@/types';
+import { ApiResponse, User, TokenPack, TokenBalance, TokenTransaction, PaginatedResponse } from '@/types';
 
 export interface CreateOrderResponse {
   orderId: string;
   amount: number;
   currency: string;
   keyId: string;
-  plan: Plan;
+  packId: string;
+  packName: string;
+  tokens: number;
 }
 
 export interface VerifyPaymentPayload {
@@ -46,15 +48,42 @@ declare global {
 }
 
 export const paymentService = {
-  createOrder: async (plan: Plan): Promise<ApiResponse<CreateOrderResponse>> => {
+  createOrder: async (packId: string): Promise<ApiResponse<CreateOrderResponse>> => {
     const response = await apiClient.post<ApiResponse<CreateOrderResponse>>('/payment/create-order', {
-      plan,
+      packId,
     });
     return response.data;
   },
 
   verifyPayment: async (payload: VerifyPaymentPayload): Promise<ApiResponse<{ status: string }>> => {
     const response = await apiClient.post<ApiResponse<{ status: string }>>('/payment/verify', payload);
+    return response.data;
+  },
+
+  getTokenBalance: async (): Promise<ApiResponse<TokenBalance>> => {
+    const response = await apiClient.get<ApiResponse<TokenBalance>>('/payment/token-balance');
+    return response.data;
+  },
+
+  getTokenPacks: async (): Promise<ApiResponse<{ packs: TokenPack[] }>> => {
+    const response = await apiClient.get<ApiResponse<{ packs: TokenPack[] }>>('/payment/token-packs');
+    return response.data;
+  },
+
+  getTokenHistory: async (page = 1, limit = 20): Promise<PaginatedResponse<TokenTransaction>> => {
+    const response = await apiClient.get<PaginatedResponse<TokenTransaction>>(
+      `/payment/token-history?page=${page}&limit=${limit}`
+    );
+    return response.data;
+  },
+
+  getEstimate: async (operation?: string, questionCount?: number): Promise<ApiResponse<Record<string, unknown>>> => {
+    const params = new URLSearchParams();
+    if (operation) params.set('operation', operation);
+    if (questionCount) params.set('questionCount', String(questionCount));
+    const response = await apiClient.get<ApiResponse<Record<string, unknown>>>(
+      `/payment/estimate${params.toString() ? `?${params.toString()}` : ''}`
+    );
     return response.data;
   },
 
@@ -94,7 +123,7 @@ export const paymentService = {
         amount: order.amount,
         currency: order.currency,
         name: 'Interview App',
-        description: `${order.plan === 'basic' ? 'Basic' : 'Pro'} Plan`,
+        description: `${order.packName} - ${order.tokens} tokens`,
         order_id: order.orderId,
         prefill: {
           name: user ? `${user.firstName} ${user.lastName}`.trim() : undefined,

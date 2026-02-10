@@ -21,7 +21,7 @@ export interface StoredUser {
   name: string;
   picture?: string;
   isPaid?: boolean;
-  plan?: 'basic' | 'pro' | null;
+  tokenBalance?: number;
 }
 
 /**

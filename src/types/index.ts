@@ -1,6 +1,4 @@
 // User Types
-export type Plan = 'basic' | 'pro';
-
 export interface User {
   id: string;
   email: string;
@@ -21,8 +19,36 @@ export interface User {
   showActivity?: boolean;
   showAchievements?: boolean;
   isPaid?: boolean;
-  plan?: Plan | null;
+  tokenBalance?: number;
   createdAt?: string;
+}
+
+// Token Types
+export interface TokenPack {
+  id: string;
+  name: string;
+  tokens: number;
+  priceINR: number;
+  displayPriceINR: number;
+  popular?: boolean;
+  description: string;
+}
+
+export interface TokenBalance {
+  tokenBalance: number;
+  isPaid: boolean;
+}
+
+export interface TokenTransaction {
+  id: string;
+  userId: string;
+  type: 'credit' | 'debit';
+  operation: string;
+  amount: number;
+  balanceBefore: number;
+  balanceAfter: number;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
 }
 
 export interface AuthState {

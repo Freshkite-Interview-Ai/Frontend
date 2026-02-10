@@ -1,5 +1,5 @@
 import apiClient from './api';
-import { ApiResponse, User, Plan } from '@/types';
+import { ApiResponse, User } from '@/types';
 
 interface BackendUserResponse {
   id: string;
@@ -18,7 +18,7 @@ interface BackendUserResponse {
   showActivity?: boolean;
   showAchievements?: boolean;
   isPaid?: boolean;
-  plan?: Plan | null;
+  tokenBalance?: number;
   createdAt?: string;
 }
 
@@ -59,7 +59,7 @@ const mapBackendUserToUser = (backendUser: BackendUserResponse): User => {
     showActivity: backendUser.showActivity,
     showAchievements: backendUser.showAchievements,
     isPaid: backendUser.isPaid ?? false,
-    plan: backendUser.plan ?? null,
+    tokenBalance: backendUser.tokenBalance ?? 0,
     createdAt: backendUser.createdAt,
   };
 };

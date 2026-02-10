@@ -10,7 +10,7 @@ import { Card, CardContent, Button, LoadingPage } from '@/components/ui';
 import { analyticsService, userService, audioService } from '@/services';
 import { ReportWithConcept } from '@/services/audioService';
 import { useAuthStore } from '@/store';
-import { usePlanGuard } from '@/hooks';
+import { useTokenGuard } from '@/hooks';
 import { UserAnalyticsWithDetails } from '@/types';
 
 // Star rating component
@@ -41,25 +41,23 @@ export default function ProfilePage() {
   const [reportsLoading, setReportsLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState<ReportWithConcept | null>(null);
   const { user: storedUser, setUser } = useAuthStore();
-  const { isChecking: isPlanChecking } = usePlanGuard('none');
+  const { isChecking: isPlanChecking } = useTokenGuard();
 
   const isLoading = status === 'loading';
   const isAuthenticated = status === 'authenticated';
   const user = session?.user;
 
-  const planLabel = useMemo(() => {
-    if (!storedUser?.plan) return 'Free';
-    const normalized = storedUser.plan.toString().toLowerCase();
-    if (normalized === 'basic') return 'Basic';
-    if (normalized === 'pro') return 'Pro';
-    return storedUser.plan;
-  }, [storedUser?.plan]);
+  const tokenBalance = storedUser?.tokenBalance ?? 0;
 
-  const planStatus = useMemo(() => {
-    if (!storedUser?.plan) return 'Inactive';
+  const accountLabel = useMemo(() => {
+    if (!storedUser?.isPaid) return 'Free';
+    return 'Active';
+  }, [storedUser?.isPaid]);
+
+  const accountStatus = useMemo(() => {
     if (!storedUser?.isPaid) return 'Inactive';
     return 'Active';
-  }, [storedUser?.isPaid, storedUser?.plan]);
+  }, [storedUser?.isPaid]);
 
   // Load analytics data
   useEffect(() => {
@@ -99,7 +97,7 @@ export default function ProfilePage() {
   useEffect(() => {
     const loadUserProfile = async () => {
       if (!isAuthenticated) return;
-      if (storedUser?.plan !== undefined && storedUser?.isPaid !== undefined) return;
+      if (storedUser?.isPaid !== undefined && storedUser?.tokenBalance !== undefined) return;
       try {
         const response = await userService.getMe();
         if (response?.data) {
@@ -110,7 +108,7 @@ export default function ProfilePage() {
       }
     };
     loadUserProfile();
-  }, [isAuthenticated, setUser, storedUser?.isPaid, storedUser?.plan]);
+  }, [isAuthenticated, setUser, storedUser?.isPaid, storedUser?.tokenBalance]);
 
   if (isLoading || isPlanChecking) {
     return <LoadingPage message="Loading profile..." />;
@@ -410,12 +408,12 @@ export default function ProfilePage() {
 
             {/* Action Buttons on Banner */}
             <div className="absolute top-4 right-4 flex gap-2">
-              <Link href="/plan">
+              <Link href="/tokens">
                 <Button size="sm" className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border-white/30 text-white shadow-lg">
                   <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                   </svg>
-                  Upgrade
+                  Buy Tokens
                 </Button>
               </Link>
               <Link href="/settings">
@@ -462,26 +460,24 @@ export default function ProfilePage() {
                 </p>
                 <div className="flex items-center gap-2 mt-3">
                   <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
-                    planLabel === 'Pro'
+                    tokenBalance > 0
                       ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white'
-                      : planLabel === 'Basic'
-                      ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300'
                       : 'bg-secondary-100 text-secondary-600 dark:bg-secondary-800 dark:text-secondary-400'
                   }`}>
-                    {planLabel === 'Pro' && (
+                    {tokenBalance > 0 && (
                       <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                       </svg>
                     )}
-                    {planLabel} Plan
+                    {tokenBalance} Tokens
                   </span>
                   <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${
-                    planStatus === 'Active'
+                    accountStatus === 'Active'
                       ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400'
                       : 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400'
                   }`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${planStatus === 'Active' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                    {planStatus}
+                    <span className={`w-1.5 h-1.5 rounded-full ${accountStatus === 'Active' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                    {accountStatus}
                   </span>
                 </div>
               </div>

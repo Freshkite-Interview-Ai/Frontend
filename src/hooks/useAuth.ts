@@ -30,7 +30,7 @@ export const useAuth = () => {
         username: storedUser.email?.split('@')[0] || '',
         avatar: storedUser.picture || undefined,
         isPaid: storedUser.isPaid ?? false,
-        plan: storedUser.plan ?? null,
+        tokenBalance: storedUser.tokenBalance ?? 0,
       }
     : session?.user
     ? {
@@ -41,7 +41,7 @@ export const useAuth = () => {
         username: session.user.email?.split('@')[0] || '',
         avatar: session.user.image || undefined,
         isPaid: false,
-        plan: null,
+        tokenBalance: 0,
       }
     : null;
 

@@ -3,12 +3,13 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import Link from 'next/link';
 import { DashboardLayout, PageHeader } from '@/components/layout';
 import { Card, CardContent, Button, LoadingSpinner, Badge, Input } from '@/components/ui';
 import { ConceptCard } from '@/components/features';
-import { useApi, usePlanGuard } from '@/hooks';
+import { useApi, useTokenGuard } from '@/hooks';
 import { useAppStore } from '@/store';
-import { conceptService } from '@/services';
+import { conceptService, paymentService } from '@/services';
 import { Concept, ConceptDifficulty } from '@/types';
 
 // Groups for filtering
@@ -28,7 +29,7 @@ export default function ConceptsPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const { concepts, setConcepts, conceptsLoading, setConceptsLoading } = useAppStore();
-  const { isChecking: isPlanChecking } = usePlanGuard('basic');
+  const { isChecking: isPlanChecking } = useTokenGuard();
 
   const isAuthenticated = status === 'authenticated';
   const authLoading = status === 'loading';
@@ -36,12 +37,32 @@ export default function ConceptsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGroup, setSelectedGroup] = useState('All');
   const [selectedDifficulty, setSelectedDifficulty] = useState<'All' | ConceptDifficulty>('All');
+  const [tokenBalance, setTokenBalance] = useState(0);
+  const [estimatedCost, setEstimatedCost] = useState(0);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       router.push('/login');
     }
   }, [authLoading, isAuthenticated, router]);
+
+  // Load token balance and audio practice cost
+  useEffect(() => {
+    const loadTokenInfo = async () => {
+      try {
+        const [balanceRes, estimateRes] = await Promise.all([
+          paymentService.getTokenBalance(),
+          paymentService.getEstimate('analyze_audio', undefined),
+        ]);
+        setTokenBalance(balanceRes.data?.tokenBalance ?? 0);
+        setEstimatedCost((estimateRes.data as any)?.estimatedTokens ?? 50);
+      } catch (error) {
+        console.error('Failed to load token info:', error);
+        setEstimatedCost(50); // Default to 50 tokens for audio practice
+      }
+    };
+    loadTokenInfo();
+  }, []);
 
   // Load concepts from backend
   useEffect(() => {
@@ -99,6 +120,85 @@ export default function ConceptsPage() {
         title="Concepts"
         description="Browse and practice technical concepts to prepare for your interviews."
       />
+
+      {/* Token Information */}
+      <Card className="mb-8 border-primary-200 dark:border-primary-800 bg-gradient-to-br from-primary-50 dark:from-primary-950/20 to-transparent dark:to-transparent">
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-sm font-semibold text-secondary-700 dark:text-secondary-300 uppercase tracking-wide mb-3">
+                Token Information
+              </h3>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              {/* Balance Card */}
+              <div className="relative overflow-hidden rounded-lg border border-primary-100 dark:border-primary-900 bg-white dark:bg-secondary-900 p-4">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 to-transparent" />
+                <div className="relative">
+                  <p className="text-xs font-medium text-secondary-600 dark:text-secondary-400 mb-1">Available</p>
+                  <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">{tokenBalance}</p>
+                  <p className="text-xs text-secondary-500 dark:text-secondary-500 mt-1">tokens</p>
+                </div>
+              </div>
+
+              {/* Cost Card */}
+              <div className="relative overflow-hidden rounded-lg border border-amber-100 dark:border-amber-900 bg-white dark:bg-secondary-900 p-4">
+                <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent" />
+                <div className="relative">
+                  <p className="text-xs font-medium text-secondary-600 dark:text-secondary-400 mb-1">Per Analysis</p>
+                  <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{estimatedCost}</p>
+                  <p className="text-xs text-secondary-500 dark:text-secondary-500 mt-1">tokens</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Status Indicator */}
+            {estimatedCost <= tokenBalance && tokenBalance > 0 ? (
+              <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800/50 flex items-center gap-2">
+                <svg className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <p className="text-sm text-emerald-700 dark:text-emerald-200 font-medium">
+                  Ready to practice! You have sufficient tokens
+                </p>
+              </div>
+            ) : estimatedCost > tokenBalance ? (
+              <div className="space-y-2">
+                <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800/50 flex items-center gap-2">
+                  <svg className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  <p className="text-sm text-amber-700 dark:text-amber-200 font-medium">
+                    Need {estimatedCost - tokenBalance} more tokens
+                  </p>
+                </div>
+                <Link href="/tokens" className="w-full block">
+                  <Button size="sm" className="w-full">
+                    Buy Tokens Now
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800/50 flex items-center gap-2">
+                  <svg className="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M13.477 14.89A6 6 0 015.11 2.522a6 6 0 018.367 8.368zM9 13a4 4 0 100-8 4 4 0 000 8zm4.882-3.118a.75.75 0 10-1.06-1.061A2.25 2.25 0 1112.75 9a.75.75 0 01-1.5 0 3.75 3.75 0 00-3.868-3.868z" clipRule="evenodd" />
+                  </svg>
+                  <p className="text-sm text-red-700 dark:text-red-200 font-medium">
+                    No tokens available. Start practicing by purchasing tokens
+                  </p>
+                </div>
+                <Link href="/tokens" className="w-full block">
+                  <Button size="sm" className="w-full">
+                    Get Tokens
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Filters */}
       <Card className="mb-8">

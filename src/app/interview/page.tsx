@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { DashboardLayout, PageHeader } from '@/components/layout';
 import { Card, CardContent, Button, LoadingSpinner, Badge } from '@/components/ui';
-import { useAudioRecorder, usePlanGuard } from '@/hooks';
-import { interviewService } from '@/services';
+import { useAudioRecorder, useTokenGuard } from '@/hooks';
+import { interviewService, paymentService } from '@/services';
 import { useAppStore } from '@/store';
 import { InterviewEvaluation, InterviewFinalReport, InterviewDifficulty } from '@/types';
 
@@ -25,7 +25,7 @@ export default function InterviewPage() {
 	const router = useRouter();
 	const { status } = useSession();
 	const { resume } = useAppStore();
-	const { isChecking: isPlanChecking } = usePlanGuard('pro');
+	const { isChecking: isPlanChecking } = useTokenGuard();
 
 	const isAuthenticated = status === 'authenticated';
 	const authLoading = status === 'loading';
@@ -41,6 +41,8 @@ export default function InterviewPage() {
 	const [pendingAnswer, setPendingAnswer] = useState<Blob | null>(null);
 	const [loadingStage, setLoadingStage] = useState<'starting' | 'question' | 'answer' | 'finish' | null>(null);
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
+	const [tokenBalance, setTokenBalance] = useState(0);
+	const [estimatedCost, setEstimatedCost] = useState(0);
 	const evaluationsRef = useRef<InterviewEvaluation[]>([]);
 	const isInterviewActive = Boolean(interviewId) && !finalReport;
 
@@ -69,6 +71,23 @@ export default function InterviewPage() {
 			router.push('/login');
 		}
 	}, [authLoading, isAuthenticated, router]);
+
+	// Load token balance and estimate cost
+	useEffect(() => {
+		const loadTokenInfo = async () => {
+			try {
+				const [balanceRes, estimateRes] = await Promise.all([
+					paymentService.getTokenBalance(),
+					paymentService.getEstimate('interview_session', questionCount),
+				]);
+				setTokenBalance(balanceRes.data?.tokenBalance ?? 0);
+				setEstimatedCost((estimateRes.data as any)?.estimatedTokens ?? 0);
+			} catch (error) {
+				console.error('Failed to load token info:', error);
+			}
+		};
+		loadTokenInfo();
+	}, [questionCount]);
 
 	const loadNextQuestion = useCallback(
 		async (activeInterviewId: string, currentEvaluations: InterviewEvaluation[]) => {
@@ -159,6 +178,12 @@ export default function InterviewPage() {
 				}
 			} catch (error) {
 				console.error('Failed to submit answer:', error);
+				// Check if error is 402 Payment Required (insufficient tokens)
+				if (error instanceof Error && error.message?.includes('402')) {
+					setErrorMessage('Insufficient tokens. Please buy more tokens to continue with the interview.');
+				} else {
+					setErrorMessage('We could not submit your answer. Please try again.');
+				}
 				setErrorMessage('We could not submit your answer. Please try again.');
 				setLoadingStage(null);
 			}
@@ -523,6 +548,51 @@ export default function InterviewPage() {
 				</div>
 
 				<div className="lg:col-span-1 space-y-6">
+					<Card className="border-primary-200 dark:border-primary-800">
+						<CardContent>
+							<h3 className="font-semibold text-secondary-900 dark:text-white mb-4">Token Information</h3>
+							<div className="space-y-3 text-sm">
+								<div className="flex items-center justify-between p-3 rounded-lg bg-secondary-50 dark:bg-secondary-800/50">
+									<span className="text-secondary-600 dark:text-secondary-400">Available Tokens</span>
+									<span className="font-bold text-lg text-primary-600 dark:text-primary-400">{tokenBalance}</span>
+								</div>
+								<div className="flex items-center justify-between p-3 rounded-lg bg-secondary-50 dark:bg-secondary-800/50">
+									<span className="text-secondary-600 dark:text-secondary-400">Estimated Cost</span>
+									<span className="font-bold text-lg text-secondary-900 dark:text-white">{estimatedCost}</span>
+								</div>
+								{estimatedCost <= tokenBalance && tokenBalance > 0 ? (
+									<div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
+										<p className="text-xs text-emerald-700 dark:text-emerald-200 font-medium">
+											✓ Sufficient tokens for {questionCount} questions
+										</p>
+									</div>
+								) : estimatedCost > tokenBalance ? (
+									<div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+										<p className="text-xs text-amber-700 dark:text-amber-200 font-medium">
+											⚠ Need {estimatedCost - tokenBalance} more tokens
+										</p>
+										<Link href="/tokens">
+											<Button size="sm" className="mt-2 w-full" variant="outline">
+												Buy Tokens
+											</Button>
+										</Link>
+									</div>
+								) : (
+									<div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+										<p className="text-xs text-red-700 dark:text-red-200 font-medium">
+											Get tokens to practice
+										</p>
+										<Link href="/tokens">
+											<Button size="sm" className="mt-2 w-full">
+												Buy Tokens
+											</Button>
+										</Link>
+									</div>
+								)}
+							</div>
+						</CardContent>
+					</Card>
+
 					<Card>
 						<CardContent>
 							<h3 className="font-semibold text-secondary-900 dark:text-white mb-4">Interview Tips</h3>
