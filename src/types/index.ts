@@ -23,6 +23,89 @@ export interface User {
   createdAt?: string;
 }
 
+// Company Types
+export interface CompanyProfile {
+  id: string;
+  companyName: string;
+  email: string;
+  industry?: string;
+  createdAt?: string;
+}
+
+export interface CompanyCandidateSummary {
+  id: string;
+  name: string;
+  role?: string | null;
+  skills?: string[];
+  education?: string[];
+  experience?: number | null;
+  profileSummary?: string | null;
+}
+
+export interface CompanyCandidateProfile extends CompanyCandidateSummary {
+  highlights?: string[];
+  location?: string;
+  experienceSummary?: string;
+}
+
+export interface CompanyCandidateAnalyticsSummary {
+  averageRating: number | null;
+  currentStreak: number;
+  longestStreak: number;
+  interviewsCompleted: number;
+  totalAttempts: number;
+  lastActivityAt: string | null;
+}
+
+export interface CompanyCandidateInterviewSummary {
+  id: string;
+  role?: string | null;
+  overallScore?: number | null;
+  decision?: string | null;
+  completedAt?: string | null;
+}
+
+export interface CompanyCandidateAudioReportSummary {
+  id: string;
+  overallRating: number;
+  createdAt: string;
+  concept?: {
+    id?: string;
+    title?: string;
+    difficulty?: string;
+  };
+}
+
+export interface CompanyCandidateProblemStats {
+  pass: number;
+  fail: number;
+  completed: number;
+  total: number;
+  lastUpdatedAt: string | null;
+}
+
+export interface CompanyCandidateDetails {
+  id: string;
+  name: string;
+  role?: string | null;
+  skills: string[];
+  education: string[];
+  experience?: number | null;
+  profileSummary?: string | null;
+  contact: {
+    email?: string;
+    location?: string;
+  };
+  analytics?: CompanyCandidateAnalyticsSummary | null;
+  interviews?: CompanyCandidateInterviewSummary[];
+  audioReports?: CompanyCandidateAudioReportSummary[];
+  problemStats?: CompanyCandidateProblemStats | null;
+  visibility: {
+    showActivity: boolean;
+    showAchievements: boolean;
+  };
+}
+
 // Token Types
 export interface TokenPack {
   id: string;

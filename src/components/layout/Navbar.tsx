@@ -3,10 +3,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { Button } from '@/components/ui';
 import { useTheme } from '@/components/providers';
+import { companyAuthService } from '@/services';
 
 interface NavItem {
   label: string;
@@ -40,34 +41,6 @@ const MoonIcon = () => (
   </svg>
 );
 
-const UserIcon = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-    />
-  </svg>
-);
-
-const SettingsIcon = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-    />
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-    />
-  </svg>
-);
-
 const LogoutIcon = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path
@@ -81,14 +54,19 @@ const LogoutIcon = () => (
 
 export const Navbar: React.FC = () => {
   const pathname = usePathname();
+  const router = useRouter();
   const { data: session, status } = useSession();
   const { theme, toggleTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
-  const isAuthenticated = status === 'authenticated';
+  const isCompanyRoute = pathname?.startsWith('/company');
+  const company = isCompanyRoute ? companyAuthService.getCompany() : null;
+  const isAuthenticated = isCompanyRoute ? companyAuthService.isAuthenticated() : status === 'authenticated';
   const user = session?.user;
+  const displayName = isCompanyRoute ? company?.companyName : user?.name;
+  const userInitial = (displayName || user?.email || 'U')[0]?.toUpperCase() || 'U';
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -105,6 +83,11 @@ export const Navbar: React.FC = () => {
   const handleLogout = async () => {
     try {
       setUserMenuOpen(false);
+      if (isCompanyRoute) {
+        companyAuthService.logout();
+        router.replace('/login?mode=company');
+        return;
+      }
       await signOut({ callbackUrl: '/' });
     } catch (error) {
       console.error('Logout failed:', error);
@@ -181,7 +164,7 @@ export const Navbar: React.FC = () => {
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
                     className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-secondary-100 dark:hover:bg-secondary-700 transition-all duration-200"
                   >
-                    {user?.image ? (
+                    {!isCompanyRoute && user?.image ? (
                       <Image
                         src={user.image}
                         alt={user.name || 'User'}
@@ -192,7 +175,7 @@ export const Navbar: React.FC = () => {
                     ) : (
                       <div className="w-9 h-9 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center ring-2 ring-primary-500/20 ring-offset-2 ring-offset-white dark:ring-offset-secondary-800">
                         <span className="text-sm font-semibold text-white">
-                          {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
+                          {userInitial}
                         </span>
                       </div>
                     )}
@@ -204,35 +187,12 @@ export const Navbar: React.FC = () => {
                       {/* User Info Header */}
                       <div className="px-4 py-3 border-b border-secondary-100 dark:border-secondary-700">
                         <p className="text-sm font-semibold text-secondary-900 dark:text-white truncate">
-                          {user?.name || 'User'}
+                          {displayName || 'User'}
                         </p>
-                        <p className="text-xs text-secondary-500 dark:text-secondary-400 truncate">
-                          {user?.email}
-                        </p>
-                      </div>
-
-                      {/* Menu Items */}
-                      <div className="py-1">
-                        <Link
-                          href="/profile"
-                          onClick={() => setUserMenuOpen(false)}
-                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-secondary-700 dark:text-secondary-300 hover:bg-secondary-50 dark:hover:bg-secondary-700 transition-colors duration-150"
-                        >
-                          <UserIcon />
-                          My Profile
-                        </Link>
-                        <Link
-                          href="/settings"
-                          onClick={() => setUserMenuOpen(false)}
-                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-secondary-700 dark:text-secondary-300 hover:bg-secondary-50 dark:hover:bg-secondary-700 transition-colors duration-150"
-                        >
-                          <SettingsIcon />
-                          Settings
-                        </Link>
                       </div>
 
                       {/* Logout */}
-                      <div className="border-t border-secondary-100 dark:border-secondary-700 pt-1">
+                      <div className="pt-1">
                         <button
                           onClick={handleLogout}
                           className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-150"

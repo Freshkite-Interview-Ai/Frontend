@@ -74,6 +74,10 @@ export default function Home() {
                 Learn More
               </Link>
             </div>
+            <div className="mt-10 inline-flex flex-col sm:flex-row items-center justify-center gap-3 rounded-2xl border border-primary-100 bg-white/80 px-6 py-4 text-sm text-secondary-700 shadow-sm backdrop-blur dark:border-primary-900/40 dark:bg-secondary-800/80 dark:text-secondary-200">
+              <span className="font-semibold text-secondary-900 dark:text-white">Company visibility</span>
+              <span>Public profiles can be viewed by hiring teams, so they can reach out and hire you.</span>
+            </div>
           </div>
 
           {/* Features Section */}

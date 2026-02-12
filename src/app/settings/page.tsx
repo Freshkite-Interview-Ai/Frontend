@@ -595,6 +595,13 @@ export default function SettingsPage() {
         </p>
       </div>
 
+      <div className="rounded-2xl border border-primary-100 bg-primary-50/60 p-5 text-sm text-secondary-700 dark:border-primary-900/40 dark:bg-primary-900/20 dark:text-secondary-200">
+        <p className="font-semibold text-secondary-900 dark:text-white">Company visibility</p>
+        <p className="mt-1">
+          If your profile is public, companies can view your profile details and contact you to hire.
+        </p>
+      </div>
+
       {/* Profile Visibility */}
       <div className="p-6 bg-secondary-50 dark:bg-secondary-700/50 rounded-2xl">
         <h4 className="font-medium text-secondary-900 dark:text-white mb-4">Profile Visibility</h4>
