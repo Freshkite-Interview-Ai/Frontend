@@ -94,13 +94,17 @@ export const Navbar: React.FC = () => {
     }
   };
 
+  const homeHref = isAuthenticated
+    ? (isCompanyRoute ? '/company/dashboard' : '/dashboard')
+    : '/';
+
   return (
     <nav className="bg-white dark:bg-secondary-800 border-b border-secondary-200 dark:border-secondary-700 sticky top-0 z-40 backdrop-blur-lg bg-opacity-90 dark:bg-opacity-90">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <Link href="/" className="flex items-center gap-2 group">
+            <Link href={homeHref} className="flex items-center gap-2 group">
               <div className="w-9 h-9 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/25 group-hover:shadow-primary-500/40 transition-shadow duration-300">
                 <svg
                   className="w-5 h-5 text-white"
@@ -190,6 +194,25 @@ export const Navbar: React.FC = () => {
                           {displayName || 'User'}
                         </p>
                       </div>
+
+                      {!isCompanyRoute && (
+                        <div className="py-1">
+                          <Link
+                            href="/profile"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-secondary-700 dark:text-secondary-200 hover:bg-secondary-50 dark:hover:bg-secondary-700/50 transition-colors duration-150"
+                          >
+                            Profile
+                          </Link>
+                          <Link
+                            href="/settings"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-secondary-700 dark:text-secondary-200 hover:bg-secondary-50 dark:hover:bg-secondary-700/50 transition-colors duration-150"
+                          >
+                            Settings
+                          </Link>
+                        </div>
+                      )}
 
                       {/* Logout */}
                       <div className="pt-1">

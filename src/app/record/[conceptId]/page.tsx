@@ -7,8 +7,8 @@ import Link from 'next/link';
 import { DashboardLayout, PageHeader } from '@/components/layout';
 import { Card, CardContent, Button, LoadingSpinner, Badge } from '@/components/ui';
 import { AudioRecorder, AudioReportCard } from '@/components/features';
-import { useApi } from '@/hooks';
-import { audioService, conceptService, interviewService } from '@/services';
+import { useTokenGuard } from '@/hooks';
+import { audioService, conceptService } from '@/services';
 import { Concept, AudioReport } from '@/types';
 
 export default function RecordPage() {
@@ -19,14 +19,14 @@ export default function RecordPage() {
   const { data: session, status } = useSession();
   const isAuthenticated = status === 'authenticated';
   const authLoading = status === 'loading';
+  const { isChecking: isPlanChecking } = useTokenGuard();
   
   const [concept, setConcept] = useState<Concept | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
+  const [analyzeStatus, setAnalyzeStatus] = useState<'idle' | 'analyzing' | 'success' | 'error'>('idle');
+  const [analyzeError, setAnalyzeError] = useState<string | null>(null);
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
   const [recordedDuration, setRecordedDuration] = useState(0);
-  const [uploadedAudioId, setUploadedAudioId] = useState<string | null>(null);
-  const [analyzeStatus, setAnalyzeStatus] = useState<'idle' | 'analyzing' | 'success' | 'error'>('idle');
   const [report, setReport] = useState<AudioReport | null>(null);
 
   useEffect(() => {
@@ -59,40 +59,33 @@ export default function RecordPage() {
     setRecordedDuration(duration);
   };
 
-  const handleSubmit = async () => {
+  // Single-step: send audio → get AI report back
+  const handleGetReport = async () => {
     if (!recordedBlob || !conceptId) return;
 
-    setUploadStatus('uploading');
-    try {
-      const response = await audioService.uploadAudio(conceptId, recordedBlob, recordedDuration);
-      setUploadedAudioId(response.data.id);
-      setUploadStatus('success');
-    } catch (error) {
-      console.error('Upload failed:', error);
-      setUploadStatus('error');
-    }
-  };
-
-  const handleAnalyze = async () => {
-    if (!uploadedAudioId || !concept) return;
-
     setAnalyzeStatus('analyzing');
+    setAnalyzeError(null);
     try {
-      const response = await interviewService.analyzeAudio(uploadedAudioId, concept.description);
+      const response = await audioService.analyzeRecording(conceptId, recordedBlob, recordedDuration);
       setReport(response.data);
       setAnalyzeStatus('success');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Analysis failed:', error);
+      const status = error?.response?.status || error?.status;
+      if (status === 402 || error?.message?.includes('402')) {
+        setAnalyzeError('Insufficient tokens. Please purchase more tokens to get AI feedback.');
+      } else {
+        setAnalyzeError('Failed to analyze recording. Please try again.');
+      }
       setAnalyzeStatus('error');
     }
   };
 
   const handleRecordAnother = () => {
-    setUploadStatus('idle');
+    setAnalyzeStatus('idle');
+    setAnalyzeError(null);
     setRecordedBlob(null);
     setRecordedDuration(0);
-    setUploadedAudioId(null);
-    setAnalyzeStatus('idle');
     setReport(null);
   };
 
@@ -108,7 +101,7 @@ export default function RecordPage() {
     ADVANCED: 'Advanced',
   } as const;
 
-  if (authLoading || isLoading) {
+  if (authLoading || isPlanChecking || isLoading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[400px]">
@@ -218,84 +211,24 @@ export default function RecordPage() {
 
         {/* Recording Area */}
         <div className="lg:col-span-2">
-          {uploadStatus === 'success' ? (
+          {analyzeStatus === 'success' && report ? (
             <>
-              {analyzeStatus === 'success' && report ? (
-                <>
-                  <AudioReportCard report={report} className="mb-6" />
-                  <div className="flex justify-center gap-4">
-                    <Link href="/concepts">
-                      <Button variant="outline">Back to Concepts</Button>
-                    </Link>
-                    <Button onClick={handleRecordAnother}>
-                      Record Another
-                    </Button>
-                  </div>
-                </>
-              ) : (
-                <Card>
-                  <CardContent>
-                    <div className="text-center py-12">
-                      <div className="w-20 h-20 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <svg
-                          className="w-10 h-10 text-green-600 dark:text-green-400"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                      </div>
-                      <h2 className="text-2xl font-bold text-secondary-900 dark:text-white mb-2">
-                        Recording Submitted!
-                      </h2>
-                      <p className="text-secondary-600 dark:text-secondary-400 mb-8">
-                        Your answer has been saved successfully. Would you like to get AI feedback?
-                      </p>
-                      
-                      {analyzeStatus === 'error' && (
-                        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg text-red-700 dark:text-red-400 text-sm">
-                          Failed to analyze recording. Please try again.
-                        </div>
-                      )}
-
-                      <div className="flex justify-center gap-4">
-                        <Link href="/concepts">
-                          <Button variant="outline">Back to Concepts</Button>
-                        </Link>
-                        <Button
-                          onClick={handleAnalyze}
-                          isLoading={analyzeStatus === 'analyzing'}
-                          disabled={analyzeStatus === 'analyzing'}
-                        >
-                          {analyzeStatus === 'analyzing' ? 'Analyzing...' : '🤖 Get AI Feedback'}
-                        </Button>
-                      </div>
-
-                      <div className="mt-6 pt-6 border-t border-secondary-100 dark:border-secondary-700">
-                        <button
-                          onClick={handleRecordAnother}
-                          className="text-sm text-primary-600 dark:text-primary-400 hover:underline"
-                        >
-                          Or record another answer
-                        </button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+              <AudioReportCard report={report} className="mb-6" />
+              <div className="flex justify-center gap-4">
+                <Link href="/concepts">
+                  <Button variant="outline">Back to Concepts</Button>
+                </Link>
+                <Button onClick={handleRecordAnother}>
+                  Record Another
+                </Button>
+              </div>
             </>
           ) : (
             <>
               <AudioRecorder
                 onRecordingComplete={handleRecordingComplete}
                 maxDuration={300}
-                disabled={uploadStatus === 'uploading'}
+                disabled={analyzeStatus === 'analyzing'}
               />
 
               {recordedBlob && (
@@ -304,24 +237,24 @@ export default function RecordPage() {
                     <CardContent>
                       <div className="flex items-center justify-between">
                         <div>
-                          <h3 className="font-medium text-secondary-900 dark:text-white">Ready to Submit</h3>
+                          <h3 className="font-medium text-secondary-900 dark:text-white">Ready to Analyze</h3>
                           <p className="text-sm text-secondary-600 dark:text-secondary-400">
                             Duration: {Math.floor(recordedDuration / 60)}:
                             {(recordedDuration % 60).toString().padStart(2, '0')}
                           </p>
                         </div>
                         <Button
-                          onClick={handleSubmit}
-                          isLoading={uploadStatus === 'uploading'}
-                          disabled={uploadStatus === 'uploading'}
+                          onClick={handleGetReport}
+                          isLoading={analyzeStatus === 'analyzing'}
+                          disabled={analyzeStatus === 'analyzing'}
                         >
-                          Submit Recording
+                          {analyzeStatus === 'analyzing' ? 'Analyzing...' : '🤖 Get AI Report'}
                         </Button>
                       </div>
 
-                      {uploadStatus === 'error' && (
+                      {analyzeStatus === 'error' && analyzeError && (
                         <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg text-red-700 dark:text-red-400 text-sm">
-                          Failed to upload recording. Please try again.
+                          {analyzeError}
                         </div>
                       )}
                     </CardContent>

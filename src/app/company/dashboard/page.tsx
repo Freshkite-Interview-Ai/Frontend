@@ -165,6 +165,9 @@ export default function CompanyDashboardPage() {
                 <p className="text-xs text-secondary-500 dark:text-secondary-400">Company account</p>
               </div>
             )}
+            <Button variant="outline" size="sm" onClick={handleLogout}>
+              Logout
+            </Button>
           </div>
         }
       />

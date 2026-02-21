@@ -1,10 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useAuthStore } from '@/store';
 import { userService, backendAuthService } from '@/services';
+
+// Pages that should NOT redirect to /tokens when balance is 0
+const TOKEN_REDIRECT_EXEMPT_PATHS = ['/tokens', '/profile', '/company'];
 
 interface UseTokenGuardResult {
   isChecking: boolean;
@@ -15,10 +18,15 @@ interface UseTokenGuardResult {
 
 export const useTokenGuard = (): UseTokenGuardResult => {
   const router = useRouter();
+  const pathname = usePathname();
   const { status } = useSession();
   const { user, setUser } = useAuthStore();
   const [isChecking, setIsChecking] = useState(true);
   const [hasLoadedProfile, setHasLoadedProfile] = useState(false);
+
+  const isExemptPath = TOKEN_REDIRECT_EXEMPT_PATHS.some(
+    (exemptPath) => pathname === exemptPath || pathname?.startsWith(exemptPath + '/')
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -77,13 +85,15 @@ export const useTokenGuard = (): UseTokenGuardResult => {
 
   useEffect(() => {
     if (isChecking || !hasLoadedProfile) return;
+    // Don't redirect on exempt paths (e.g., /tokens itself)
+    if (isExemptPath) return;
 
     const tokenBalance = user?.tokenBalance ?? 0;
 
     if (tokenBalance <= 0) {
       router.replace('/tokens');
     }
-  }, [isChecking, hasLoadedProfile, router, user?.tokenBalance]);
+  }, [isChecking, hasLoadedProfile, router, user?.tokenBalance, isExemptPath]);
 
   return {
     isChecking,

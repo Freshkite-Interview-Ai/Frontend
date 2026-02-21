@@ -18,20 +18,40 @@ export default function TokensPage() {
   const [error, setError] = useState<string | null>(null);
   const [packs, setPacks] = useState<TokenPack[]>([]);
   const [packsLoading, setPacksLoading] = useState(true);
+  const [tokenCosts, setTokenCosts] = useState<{ interview: number; audio: number; resume: number }>({
+    interview: 0,
+    audio: 0,
+    resume: 0,
+  });
 
-  // Load token packs from backend
+  // Load token packs and pricing from backend
   useEffect(() => {
-    const loadPacks = async () => {
+    const loadConfig = async () => {
       try {
-        const response = await paymentService.getTokenPacks();
-        setPacks(response.data?.packs ?? []);
+        const response = await paymentService.getTokenConfig();
+        const data = response.data;
+        if (data) {
+          setPacks(data.packs ?? []);
+          setTokenCosts({
+            interview: data.interviewSession8 ?? 0,
+            audio: data.audioAnalysis ?? 0,
+            resume: data.resumeAnalysis ?? 0,
+          });
+        }
       } catch (err) {
-        console.error('Failed to load token packs:', err);
+        console.error('Failed to load token config:', err);
+        // Fallback: try loading just packs
+        try {
+          const packsRes = await paymentService.getTokenPacks();
+          setPacks(packsRes.data?.packs ?? []);
+        } catch {
+          // ignore
+        }
       } finally {
         setPacksLoading(false);
       }
     };
-    loadPacks();
+    loadConfig();
   }, []);
 
   const handlePurchase = async (packId: string) => {
@@ -204,7 +224,7 @@ export default function TokensPage() {
                 🎤
               </div>
               <p className="text-sm font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300 mb-2">Interview</p>
-              <h3 className="text-3xl font-black text-blue-600 dark:text-blue-400 mb-2">~530</h3>
+              <h3 className="text-3xl font-black text-blue-600 dark:text-blue-400 mb-2">{tokenCosts.interview || '—'}</h3>
               <p className="text-sm text-blue-700/80 dark:text-blue-300/80">
                 For a full 8-question mock interview with AI evaluation and personalized report
               </p>
@@ -219,7 +239,7 @@ export default function TokensPage() {
                 🎵
               </div>
               <p className="text-sm font-bold uppercase tracking-wider text-purple-700 dark:text-purple-300 mb-2">Audio Analysis</p>
-              <h3 className="text-3xl font-black text-purple-600 dark:text-purple-400 mb-2">~57</h3>
+              <h3 className="text-3xl font-black text-purple-600 dark:text-purple-400 mb-2">{tokenCosts.audio || '—'}</h3>
               <p className="text-sm text-purple-700/80 dark:text-purple-300/80">
                 Per audio practice session with transcription and AI feedback
               </p>
@@ -234,7 +254,7 @@ export default function TokensPage() {
                 📄
               </div>
               <p className="text-sm font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300 mb-2">Resume Analysis</p>
-              <h3 className="text-3xl font-black text-emerald-600 dark:text-emerald-400 mb-2">~47</h3>
+              <h3 className="text-3xl font-black text-emerald-600 dark:text-emerald-400 mb-2">{tokenCosts.resume || '—'}</h3>
               <p className="text-sm text-emerald-700/80 dark:text-emerald-300/80">
                 AI-powered skill extraction and personalized feedback
               </p>

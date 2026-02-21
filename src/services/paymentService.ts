@@ -87,6 +87,25 @@ export const paymentService = {
     return response.data;
   },
 
+  getTokenConfig: async (): Promise<ApiResponse<{
+    operationCosts: Record<string, number>;
+    interviewSession8: number;
+    interviewSession5: number;
+    audioAnalysis: number;
+    resumeAnalysis: number;
+    packs: TokenPack[];
+  }>> => {
+    const response = await apiClient.get<ApiResponse<{
+      operationCosts: Record<string, number>;
+      interviewSession8: number;
+      interviewSession5: number;
+      audioAnalysis: number;
+      resumeAnalysis: number;
+      packs: TokenPack[];
+    }>>('/payment/token-config');
+    return response.data;
+  },
+
   loadRazorpayScript: (): Promise<boolean> => {
     return new Promise((resolve) => {
       if (typeof window === 'undefined') {

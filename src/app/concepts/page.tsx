@@ -46,19 +46,19 @@ export default function ConceptsPage() {
     }
   }, [authLoading, isAuthenticated, router]);
 
-  // Load token balance and audio practice cost
+  // Load token balance and audio practice cost from backend
   useEffect(() => {
     const loadTokenInfo = async () => {
       try {
-        const [balanceRes, estimateRes] = await Promise.all([
+        const [balanceRes, configRes] = await Promise.all([
           paymentService.getTokenBalance(),
-          paymentService.getEstimate('analyze_audio', undefined),
+          paymentService.getTokenConfig(),
         ]);
         setTokenBalance(balanceRes.data?.tokenBalance ?? 0);
-        setEstimatedCost((estimateRes.data as any)?.estimatedTokens ?? 50);
+        setEstimatedCost(configRes.data?.audioAnalysis ?? 0);
       } catch (error) {
         console.error('Failed to load token info:', error);
-        setEstimatedCost(50); // Default to 50 tokens for audio practice
+        setEstimatedCost(0);
       }
     };
     loadTokenInfo();
@@ -138,7 +138,7 @@ export default function ConceptsPage() {
                 <div className="relative">
                   <p className="text-xs font-medium text-secondary-600 dark:text-secondary-400 mb-1">Available</p>
                   <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">{tokenBalance}</p>
-                  <p className="text-xs text-secondary-500 dark:text-secondary-500 mt-1">tokens</p>
+                  <p className="text-xs text-secondary-500 dark:text-secondary-300 mt-1">tokens</p>
                 </div>
               </div>
 
@@ -148,7 +148,7 @@ export default function ConceptsPage() {
                 <div className="relative">
                   <p className="text-xs font-medium text-secondary-600 dark:text-secondary-400 mb-1">Per Analysis</p>
                   <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{estimatedCost}</p>
-                  <p className="text-xs text-secondary-500 dark:text-secondary-500 mt-1">tokens</p>
+                  <p className="text-xs text-secondary-500 dark:text-secondary-300 mt-1">tokens</p>
                 </div>
               </div>
             </div>

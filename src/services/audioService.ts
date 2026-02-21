@@ -1,5 +1,5 @@
 import apiClient from './api';
-import { ConceptAnswer, ApiResponse, PaginatedResponse } from '@/types';
+import { ConceptAnswer, ApiResponse, PaginatedResponse, AudioReport } from '@/types';
 
 export interface ReportWithConcept {
   id: string;
@@ -58,6 +58,28 @@ export const audioService = {
   getMyReports: async (page = 1, limit = 10): Promise<PaginatedResponse<ReportWithConcept>> => {
     const response = await apiClient.get<PaginatedResponse<ReportWithConcept>>(
       `/audio/reports?page=${page}&limit=${limit}`
+    );
+    return response.data;
+  },
+
+  // Single-step: upload audio + transcribe + analyze → report
+  analyzeRecording: async (
+    conceptId: string,
+    audioBlob: Blob,
+    duration: number
+  ): Promise<ApiResponse<AudioReport>> => {
+    const formData = new FormData();
+    formData.append('audio', audioBlob, 'recording.webm');
+    formData.append('conceptId', conceptId);
+    formData.append('duration', duration.toString());
+
+    const response = await apiClient.post<ApiResponse<AudioReport>>(
+      '/audio/analyze',
+      formData,
+      {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 120000,
+      }
     );
     return response.data;
   },

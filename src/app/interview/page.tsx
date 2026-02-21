@@ -78,10 +78,16 @@ export default function InterviewPage() {
 			try {
 				const [balanceRes, estimateRes] = await Promise.all([
 					paymentService.getTokenBalance(),
-					paymentService.getEstimate('interview_session', questionCount),
+					paymentService.getEstimate(),
 				]);
 				setTokenBalance(balanceRes.data?.tokenBalance ?? 0);
-				setEstimatedCost((estimateRes.data as any)?.estimatedTokens ?? 0);
+				const estimates = (estimateRes.data as any)?.estimates ?? {};
+				const perQuestionCost =
+					(estimates.generate_question ?? 0) +
+					(estimates.transcribe_audio ?? 0) +
+					(estimates.evaluate_answer ?? 0);
+				const reportCost = estimates.generate_report ?? 0;
+				setEstimatedCost(perQuestionCost * questionCount + reportCost);
 			} catch (error) {
 				console.error('Failed to load token info:', error);
 			}
@@ -104,9 +110,14 @@ export default function InterviewPage() {
 				const nextIndex = currentEvaluations.length + 1;
 				setCurrentQuestion(questionText);
 				setQuestionIndex(nextIndex);
-			} catch (error) {
+			} catch (error: any) {
 				console.error('Failed to load question:', error);
-				setErrorMessage('We could not fetch the next question. Please try again.');
+				const status = error?.response?.status || error?.status;
+				if (status === 402 || error?.message?.includes('402')) {
+					setErrorMessage('Insufficient tokens. Please purchase more tokens to continue.');
+				} else {
+					setErrorMessage('We could not fetch the next question. Please try again.');
+				}
 			} finally {
 				setLoadingStage(null);
 			}
@@ -176,15 +187,15 @@ export default function InterviewPage() {
 				} else {
 					await loadNextQuestion(interviewId, updatedEvaluations);
 				}
-			} catch (error) {
+			} catch (error: any) {
 				console.error('Failed to submit answer:', error);
 				// Check if error is 402 Payment Required (insufficient tokens)
-				if (error instanceof Error && error.message?.includes('402')) {
+				const status = error?.response?.status || error?.status;
+				if (status === 402 || error?.message?.includes('402') || error?.message?.toLowerCase()?.includes('insufficient')) {
 					setErrorMessage('Insufficient tokens. Please buy more tokens to continue with the interview.');
 				} else {
 					setErrorMessage('We could not submit your answer. Please try again.');
 				}
-				setErrorMessage('We could not submit your answer. Please try again.');
 				setLoadingStage(null);
 			}
 		},
@@ -230,9 +241,14 @@ export default function InterviewPage() {
 			setTargetQuestionCount(typeof nextQuestionCount === 'number' ? nextQuestionCount : questionCount);
 			setInterviewId(nextInterviewId);
 			await loadNextQuestion(nextInterviewId, []);
-		} catch (error) {
+		} catch (error: any) {
 			console.error('Failed to start interview:', error);
-			setErrorMessage('We could not start the interview. Please try again.');
+			const status = error?.response?.status || error?.status;
+			if (status === 402 || error?.message?.includes('402')) {
+				setErrorMessage('Insufficient tokens to start an interview. Please purchase more tokens.');
+			} else {
+				setErrorMessage('We could not start the interview. Please try again.');
+			}
 			setLoadingStage(null);
 		}
 	}, [difficulty, loadNextQuestion, questionCount, resume?.id, updateEvaluations]);
@@ -553,11 +569,11 @@ export default function InterviewPage() {
 							<h3 className="font-semibold text-secondary-900 dark:text-white mb-4">Token Information</h3>
 							<div className="space-y-3 text-sm">
 								<div className="flex items-center justify-between p-3 rounded-lg bg-secondary-50 dark:bg-secondary-800/50">
-									<span className="text-secondary-600 dark:text-secondary-400">Available Tokens</span>
+									<span className="text-secondary-600 dark:text-secondary-300">Available Tokens</span>
 									<span className="font-bold text-lg text-primary-600 dark:text-primary-400">{tokenBalance}</span>
 								</div>
 								<div className="flex items-center justify-between p-3 rounded-lg bg-secondary-50 dark:bg-secondary-800/50">
-									<span className="text-secondary-600 dark:text-secondary-400">Estimated Cost</span>
+									<span className="text-secondary-600 dark:text-secondary-300">Estimated Cost</span>
 									<span className="font-bold text-lg text-secondary-900 dark:text-white">{estimatedCost}</span>
 								</div>
 								{estimatedCost <= tokenBalance && tokenBalance > 0 ? (
