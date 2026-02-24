@@ -228,8 +228,43 @@ const { concepts, resume, currentInterview } = useAppStore();
 |--------|-------------|
 | `npm run dev` | Start development server |
 | `npm run build` | Build for production |
+| `npm run build:cf` | Build Next.js + convert output for Cloudflare Pages |
 | `npm run start` | Start production server |
 | `npm run lint` | Run ESLint |
+| `npm run typecheck` | Run TypeScript checks |
+| `npm run check` | Run typecheck + lint + build |
+| `npm run preview:cf` | Preview Cloudflare Pages output locally |
+
+## ☁️ Cloudflare Pages Deployment
+
+This project is configured for Cloudflare deployment using the OpenNext Cloudflare adapter.
+
+### Required files
+
+- `wrangler.toml` configured with:
+  - `compatibility_flags = ["nodejs_compat"]`
+  - `main = ".open-next/worker.js"`
+  - `assets.directory = ".open-next/assets"`
+
+### Build command for Cloudflare
+
+```bash
+npm run build:cf
+```
+
+### Deploy command
+
+```bash
+npm run deploy:cf
+```
+
+### Important note for Windows
+
+OpenNext can run on Windows, but reliability is better on Linux/WSL for production builds. Use one of:
+
+- Cloudflare CI build on Linux
+- WSL2 (Ubuntu) locally
+- GitHub Actions/Linux runner for build + deploy
 
 ## 🚧 Future Enhancements (AI Features)
 

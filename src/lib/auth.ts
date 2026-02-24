@@ -1,5 +1,13 @@
 import { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
+import logger from './logger';
+
+type RefreshTokenResponse = {
+  access_token: string;
+  expires_in: number;
+  id_token?: string;
+  refresh_token?: string;
+};
 
 /**
  * NextAuth configuration for Google OAuth
@@ -7,6 +15,7 @@ import GoogleProvider from 'next-auth/providers/google';
  */
 export const authOptions: NextAuthOptions = {
   debug: process.env.NODE_ENV === 'development',
+  useSecureCookies: process.env.NODE_ENV === 'production',
 
   providers: [
     GoogleProvider({
@@ -78,8 +87,16 @@ export const authOptions: NextAuthOptions = {
 /**
  * Refresh Google access token using refresh token
  */
-async function refreshGoogleToken(token: any) {
+async function refreshGoogleToken(token: {
+  refreshToken?: string;
+  idToken?: string;
+  [key: string]: unknown;
+}) {
   try {
+    if (!token.refreshToken) {
+      throw new Error('Missing refresh token');
+    }
+
     const response = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: {
@@ -93,7 +110,7 @@ async function refreshGoogleToken(token: any) {
       }),
     });
 
-    const refreshedTokens = await response.json();
+    const refreshedTokens = (await response.json()) as RefreshTokenResponse;
 
     if (!response.ok) {
       throw refreshedTokens;
@@ -108,7 +125,7 @@ async function refreshGoogleToken(token: any) {
       refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
     };
   } catch (error) {
-    console.error('Error refreshing Google token:', error);
+    logger.error('next-auth', 'Error refreshing Google token', error);
     return {
       ...token,
       error: 'RefreshAccessTokenError',

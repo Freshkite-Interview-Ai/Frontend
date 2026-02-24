@@ -2,14 +2,22 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 
-// Define public routes that don't require authentication
-const publicRoutes = ['/', '/login', '/signup'];
-
 // Define routes that should redirect authenticated users
 const authRoutes = ['/login', '/signup'];
 
 // Define protected routes that require authentication
-const protectedRoutes = ['/dashboard', '/concepts', '/record', '/resume', '/interview'];
+const protectedRoutePrefixes = [
+  '/dashboard',
+  '/concepts',
+  '/record',
+  '/resume',
+  '/interview',
+  '/tokens',
+  '/profile',
+  '/settings',
+  '/problems',
+  '/company',
+];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -31,23 +39,31 @@ export async function middleware(request: NextRequest) {
 
   const isAuthenticated = !!token;
 
-  // Check if route is protected
-  const isProtectedRoute = protectedRoutes.some(
+  // Check if route is protected (excluding auth/callback which handles its own logic)
+  const isProtectedRoute = protectedRoutePrefixes.some(
     (route) => pathname === route || pathname.startsWith(route + '/')
   );
+
+  // Auth callback handles its own redirect logic
+  if (pathname === '/auth/callback') {
+    if (!isAuthenticated) {
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
+    return NextResponse.next();
+  }
 
   // Check if route is an auth route (login/signup)
   const isAuthRoute = authRoutes.includes(pathname);
 
-  // Redirect authenticated users away from auth routes
+  // Redirect authenticated users away from auth routes to auth/callback for proper routing
   if (isAuthenticated && isAuthRoute) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    return NextResponse.redirect(new URL('/auth/callback', request.url));
   }
 
   // Redirect unauthenticated users to login for protected routes
   if (!isAuthenticated && isProtectedRoute) {
     const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('callbackUrl', pathname);
+    loginUrl.searchParams.set('callbackUrl', `${pathname}${request.nextUrl.search}`);
     return NextResponse.redirect(loginUrl);
   }
 

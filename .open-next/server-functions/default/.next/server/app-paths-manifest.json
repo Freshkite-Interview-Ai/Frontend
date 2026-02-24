@@ -1,0 +1,19 @@
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
+  "/auth/callback/page": "app/auth/callback/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/concepts/page": "app/concepts/page.js",
+  "/page": "app/page.js",
+  "/interview/page": "app/interview/page.js",
+  "/login/page": "app/login/page.js",
+  "/problems/page": "app/problems/page.js",
+  "/record/[conceptId]/page": "app/record/[conceptId]/page.js",
+  "/resume/page": "app/resume/page.js",
+  "/profile/page": "app/profile/page.js",
+  "/settings/page": "app/settings/page.js",
+  "/signup/page": "app/signup/page.js",
+  "/tokens/page": "app/tokens/page.js",
+  "/company/candidates/[id]/page": "app/company/candidates/[id]/page.js",
+  "/company/dashboard/page": "app/company/dashboard/page.js"
+}

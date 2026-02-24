@@ -37,6 +37,8 @@ export type ConceptAnswerFormData = z.infer<typeof conceptAnswerSchema>;
 // Interview Start Schema
 export const interviewStartSchema = z.object({
   resumeId: z.string().uuid('Please upload your resume first').optional(),
+  questionCount: z.coerce.number().int().min(1, 'Select at least 1 question').max(20, 'Select up to 20 questions'),
+  difficulty: z.enum(['Beginner', 'Intermediate', 'Advanced']),
 });
 
 export type InterviewStartFormData = z.infer<typeof interviewStartSchema>;

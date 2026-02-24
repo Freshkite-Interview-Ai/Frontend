@@ -106,8 +106,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         className={`
           relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200
           ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-          ${dragActive ? 'border-primary-500 bg-primary-50' : 'border-secondary-300 hover:border-primary-400 hover:bg-secondary-50'}
-          ${error ? 'border-red-300 bg-red-50' : ''}
+          ${dragActive ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-secondary-300 dark:border-secondary-600 hover:border-primary-400 hover:bg-secondary-50 dark:hover:bg-secondary-700'}
+          ${error ? 'border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20' : ''}
         `}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
@@ -117,21 +117,21 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       >
         {currentFile ? (
           <div className="flex flex-col items-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center mb-4">
+              <svg className="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <p className="text-secondary-900 font-medium">{currentFile.name}</p>
-            <p className="text-sm text-secondary-500 mt-1">{formatFileSize(currentFile.size)}</p>
+            <p className="text-secondary-900 dark:text-white font-medium">{currentFile.name}</p>
+            <p className="text-sm text-secondary-500 dark:text-secondary-400 mt-1">{formatFileSize(currentFile.size)}</p>
             <Button variant="outline" size="sm" className="mt-4" onClick={(e) => e.stopPropagation()}>
               Replace File
             </Button>
           </div>
         ) : (
           <div className="flex flex-col items-center">
-            <div className="w-16 h-16 bg-secondary-100 rounded-full flex items-center justify-center mb-4">
-              <svg className="w-8 h-8 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-16 h-16 bg-secondary-100 dark:bg-secondary-700 rounded-full flex items-center justify-center mb-4">
+              <svg className="w-8 h-8 text-secondary-400 dark:text-secondary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -140,10 +140,10 @@ export const FileUpload: React.FC<FileUploadProps> = ({
                 />
               </svg>
             </div>
-            <p className="text-secondary-900 font-medium">
+            <p className="text-secondary-900 dark:text-white font-medium">
               Drag and drop your file here, or click to browse
             </p>
-            <p className="text-sm text-secondary-500 mt-2">
+            <p className="text-sm text-secondary-500 dark:text-secondary-400 mt-2">
               {accept.replace(/\./g, '').toUpperCase()} up to {formatFileSize(maxSize)}
             </p>
           </div>
@@ -151,7 +151,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       </div>
 
       {error && (
-        <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+        <p className="mt-2 text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
             <path
               fillRule="evenodd"

@@ -17,7 +17,7 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
 
   return (
     <svg
-      className={`animate-spin text-primary-600 ${sizeStyles[size]} ${className}`}
+      className={`animate-spin text-primary-600 dark:text-primary-400 ${sizeStyles[size]} ${className}`}
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"
@@ -47,9 +47,9 @@ export const LoadingPage: React.FC<LoadingPageProps> = ({
   message = 'Loading...',
 }) => {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-secondary-50">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-secondary-50 dark:bg-secondary-900">
       <LoadingSpinner size="lg" />
-      <p className="mt-4 text-secondary-600 font-medium">{message}</p>
+      <p className="mt-4 text-secondary-600 dark:text-secondary-400 font-medium">{message}</p>
     </div>
   );
 };
@@ -66,10 +66,10 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
   if (!isVisible) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl p-8 flex flex-col items-center shadow-xl">
+    <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-secondary-800 rounded-2xl p-8 flex flex-col items-center shadow-xl">
         <LoadingSpinner size="lg" />
-        <p className="mt-4 text-secondary-700 font-medium">{message}</p>
+        <p className="mt-4 text-secondary-700 dark:text-secondary-300 font-medium">{message}</p>
       </div>
     </div>
   );

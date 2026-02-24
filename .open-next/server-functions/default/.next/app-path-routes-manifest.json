@@ -1,0 +1,19 @@
+{
+  "/_not-found/page": "/_not-found",
+  "/api/auth/[...nextauth]/route": "/api/auth/[...nextauth]",
+  "/auth/callback/page": "/auth/callback",
+  "/dashboard/page": "/dashboard",
+  "/concepts/page": "/concepts",
+  "/page": "/",
+  "/interview/page": "/interview",
+  "/login/page": "/login",
+  "/problems/page": "/problems",
+  "/record/[conceptId]/page": "/record/[conceptId]",
+  "/resume/page": "/resume",
+  "/profile/page": "/profile",
+  "/settings/page": "/settings",
+  "/signup/page": "/signup",
+  "/tokens/page": "/tokens",
+  "/company/candidates/[id]/page": "/company/candidates/[id]",
+  "/company/dashboard/page": "/company/dashboard"
+}
