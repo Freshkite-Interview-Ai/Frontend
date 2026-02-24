@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
@@ -8,7 +8,7 @@ import { Button, Input, LoadingPage } from '@/components/ui';
 import { useAuth } from '@/hooks';
 import { companyAuthService } from '@/services';
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { status } = useSession();
@@ -254,5 +254,13 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoadingPage message="Loading login page..." />}>
+      <LoginPageContent />
+    </Suspense>
   );
 }
