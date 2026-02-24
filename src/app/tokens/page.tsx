@@ -292,7 +292,7 @@ export default function TokensPage() {
               </div>
               <div>
                 <p className="font-semibold text-secondary-900 dark:text-white">No expiration</p>
-                <p className="text-sm text-secondary-600 dark:text-secondary-400">Your tokens never expire - use them whenever you're ready</p>
+                <p className="text-sm text-secondary-600 dark:text-secondary-400">Your tokens never expire - use them whenever you&apos;re ready</p>
               </div>
             </div>
           </div>

@@ -1,6 +1,7 @@
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { signOut } from 'next-auth/react';
 import { backendAuthService } from './backendAuth';
+import logger from '@/lib/logger';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002/api/v1';
 
@@ -22,6 +23,10 @@ apiClient.interceptors.request.use(
     return config;
   },
   (error: AxiosError) => {
+    logger.error('api', 'Request interceptor error', {
+      message: error.message,
+      code: error.code,
+    });
     return Promise.reject(error);
   }
 );
@@ -44,13 +49,22 @@ apiClient.interceptors.response.use(
           return apiClient(originalRequest);
         }
       } catch (refreshError) {
-        console.error('Token refresh failed:', refreshError);
+        logger.warn('api', 'Token refresh failed during retry', refreshError);
       }
 
       // Refresh failed, logout
       backendAuthService.clearTokens();
-      await signOut({ callbackUrl: '/login' });
+      if (typeof window !== 'undefined') {
+        await signOut({ callbackUrl: '/login' });
+      }
     }
+
+    logger.error('api', 'API request failed', {
+      status: error.response?.status,
+      path: originalRequest?.url,
+      method: originalRequest?.method,
+      message: error.message,
+    });
     
     return Promise.reject(error);
   }

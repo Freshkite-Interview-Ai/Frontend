@@ -1,4 +1,5 @@
 import axios from 'axios';
+import logger from '@/lib/logger';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002/api/v1';
 
@@ -10,6 +11,18 @@ const TOKEN_KEYS = {
   REFRESH_TOKEN: 'interview_ai_refresh_token',
   TOKEN_EXPIRY: 'interview_ai_token_expiry',
   USER: 'interview_ai_user',
+};
+
+let pendingRefreshPromise: Promise<string | null> | null = null;
+
+const getSessionStorage = (): Storage | null => {
+  if (typeof window === 'undefined') return null;
+  return window.sessionStorage;
+};
+
+const getLocalStorage = (): Storage | null => {
+  if (typeof window === 'undefined') return null;
+  return window.localStorage;
 };
 
 /**
@@ -85,7 +98,7 @@ export const backendAuthService = {
         return accessToken;
       }
     } catch (error) {
-      console.error('Token refresh failed:', error);
+      logger.warn('backendAuth', 'Token refresh failed', error);
       backendAuthService.clearTokens();
     }
 
@@ -96,23 +109,26 @@ export const backendAuthService = {
    * Store tokens in localStorage
    */
   setTokens: (accessToken: string, refreshToken: string, expiresIn: number): void => {
-    if (typeof window === 'undefined') return;
+    const sessionStorage = getSessionStorage();
+    const localStorage = getLocalStorage();
+    if (!sessionStorage || !localStorage) return;
 
     const expiryTime = Date.now() + expiresIn * 1000;
 
-    localStorage.setItem(TOKEN_KEYS.ACCESS_TOKEN, accessToken);
+    sessionStorage.setItem(TOKEN_KEYS.ACCESS_TOKEN, accessToken);
     localStorage.setItem(TOKEN_KEYS.REFRESH_TOKEN, refreshToken);
-    localStorage.setItem(TOKEN_KEYS.TOKEN_EXPIRY, expiryTime.toString());
+    sessionStorage.setItem(TOKEN_KEYS.TOKEN_EXPIRY, expiryTime.toString());
   },
 
   /**
    * Get access token (refreshes if expired)
    */
   getAccessToken: async (): Promise<string | null> => {
-    if (typeof window === 'undefined') return null;
+    const sessionStorage = getSessionStorage();
+    if (!sessionStorage) return null;
 
-    const accessToken = localStorage.getItem(TOKEN_KEYS.ACCESS_TOKEN);
-    const expiry = localStorage.getItem(TOKEN_KEYS.TOKEN_EXPIRY);
+    const accessToken = sessionStorage.getItem(TOKEN_KEYS.ACCESS_TOKEN);
+    const expiry = sessionStorage.getItem(TOKEN_KEYS.TOKEN_EXPIRY);
 
     if (!accessToken || !expiry) {
       return null;
@@ -121,8 +137,12 @@ export const backendAuthService = {
     // Check if token is expired (with 60 second buffer)
     const expiryTime = parseInt(expiry, 10);
     if (Date.now() > expiryTime - 60000) {
-      // Token expired, try to refresh
-      return backendAuthService.refreshAccessToken();
+      if (!pendingRefreshPromise) {
+        pendingRefreshPromise = backendAuthService.refreshAccessToken().finally(() => {
+          pendingRefreshPromise = null;
+        });
+      }
+      return pendingRefreshPromise;
     }
 
     return accessToken;
@@ -132,15 +152,17 @@ export const backendAuthService = {
    * Get access token synchronously (no refresh)
    */
   getAccessTokenSync: (): string | null => {
-    if (typeof window === 'undefined') return null;
-    return localStorage.getItem(TOKEN_KEYS.ACCESS_TOKEN);
+    const sessionStorage = getSessionStorage();
+    if (!sessionStorage) return null;
+    return sessionStorage.getItem(TOKEN_KEYS.ACCESS_TOKEN);
   },
 
   /**
    * Get refresh token
    */
   getRefreshToken: (): string | null => {
-    if (typeof window === 'undefined') return null;
+    const localStorage = getLocalStorage();
+    if (!localStorage) return null;
     return localStorage.getItem(TOKEN_KEYS.REFRESH_TOKEN);
   },
 
@@ -148,7 +170,8 @@ export const backendAuthService = {
    * Store user data
    */
   setUser: (user: StoredUser): void => {
-    if (typeof window === 'undefined') return;
+    const localStorage = getLocalStorage();
+    if (!localStorage) return;
     localStorage.setItem(TOKEN_KEYS.USER, JSON.stringify(user));
   },
 
@@ -156,7 +179,8 @@ export const backendAuthService = {
    * Get stored user data
    */
   getUser: (): StoredUser | null => {
-    if (typeof window === 'undefined') return null;
+    const localStorage = getLocalStorage();
+    if (!localStorage) return null;
 
     const userData = localStorage.getItem(TOKEN_KEYS.USER);
     if (!userData) return null;
@@ -172,9 +196,11 @@ export const backendAuthService = {
    * Check if user is authenticated (has valid tokens)
    */
   isAuthenticated: (): boolean => {
-    if (typeof window === 'undefined') return false;
+    const sessionStorage = getSessionStorage();
+    const localStorage = getLocalStorage();
+    if (!sessionStorage || !localStorage) return false;
 
-    const accessToken = localStorage.getItem(TOKEN_KEYS.ACCESS_TOKEN);
+    const accessToken = sessionStorage.getItem(TOKEN_KEYS.ACCESS_TOKEN);
     const refreshToken = localStorage.getItem(TOKEN_KEYS.REFRESH_TOKEN);
 
     return !!(accessToken && refreshToken);
@@ -184,11 +210,13 @@ export const backendAuthService = {
    * Clear all tokens and user data (logout)
    */
   clearTokens: (): void => {
-    if (typeof window === 'undefined') return;
+    const sessionStorage = getSessionStorage();
+    const localStorage = getLocalStorage();
+    if (!sessionStorage || !localStorage) return;
 
-    localStorage.removeItem(TOKEN_KEYS.ACCESS_TOKEN);
+    sessionStorage.removeItem(TOKEN_KEYS.ACCESS_TOKEN);
     localStorage.removeItem(TOKEN_KEYS.REFRESH_TOKEN);
-    localStorage.removeItem(TOKEN_KEYS.TOKEN_EXPIRY);
+    sessionStorage.removeItem(TOKEN_KEYS.TOKEN_EXPIRY);
     localStorage.removeItem(TOKEN_KEYS.USER);
   },
 
@@ -206,7 +234,7 @@ export const backendAuthService = {
         );
       }
     } catch (error) {
-      console.error('Logout API call failed:', error);
+      logger.warn('backendAuth', 'Logout API call failed', error);
     } finally {
       backendAuthService.clearTokens();
     }

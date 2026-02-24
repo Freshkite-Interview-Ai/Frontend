@@ -2,14 +2,22 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 
-// Define public routes that don't require authentication
-const publicRoutes = ['/', '/login', '/signup'];
-
 // Define routes that should redirect authenticated users
 const authRoutes = ['/login', '/signup'];
 
 // Define protected routes that require authentication
-const protectedRoutes = ['/dashboard', '/concepts', '/record', '/resume', '/interview', '/tokens', '/profile', '/settings', '/problems'];
+const protectedRoutePrefixes = [
+  '/dashboard',
+  '/concepts',
+  '/record',
+  '/resume',
+  '/interview',
+  '/tokens',
+  '/profile',
+  '/settings',
+  '/problems',
+  '/company',
+];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -32,7 +40,7 @@ export async function middleware(request: NextRequest) {
   const isAuthenticated = !!token;
 
   // Check if route is protected (excluding auth/callback which handles its own logic)
-  const isProtectedRoute = protectedRoutes.some(
+  const isProtectedRoute = protectedRoutePrefixes.some(
     (route) => pathname === route || pathname.startsWith(route + '/')
   );
 
@@ -55,7 +63,7 @@ export async function middleware(request: NextRequest) {
   // Redirect unauthenticated users to login for protected routes
   if (!isAuthenticated && isProtectedRoute) {
     const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('callbackUrl', pathname);
+    loginUrl.searchParams.set('callbackUrl', `${pathname}${request.nextUrl.search}`);
     return NextResponse.redirect(loginUrl);
   }
 
