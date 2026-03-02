@@ -122,33 +122,39 @@ export default function ConceptsPage() {
       />
 
       {/* Token Information */}
-      <Card className="mb-8 border-primary-200 dark:border-primary-800 bg-gradient-to-br from-primary-50 dark:from-primary-950/20 to-transparent dark:to-transparent">
+      <Card className="mb-8 border-primary-200 dark:border-primary-800 bg-gradient-to-br from-primary-50 dark:from-secondary-800/50 to-transparent dark:to-transparent">
         <CardContent>
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-sm font-semibold text-secondary-700 dark:text-secondary-300 uppercase tracking-wide mb-3">
-                Token Information
+          <div className="space-y-4 pt-6">
+            <div className="flex items-center justify-between border-b border-secondary-200/60 dark:border-secondary-700/60 pb-3 mb-4">
+              <h3 className="text-sm font-semibold text-secondary-700 dark:text-secondary-200 uppercase tracking-widest">
+                Token Status
               </h3>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-4">
               {/* Balance Card */}
-              <div className="relative overflow-hidden rounded-lg border border-primary-100 dark:border-primary-900 bg-white dark:bg-secondary-900 p-4">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 to-transparent" />
-                <div className="relative">
-                  <p className="text-xs font-medium text-secondary-600 dark:text-secondary-400 mb-1">Available</p>
-                  <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">{tokenBalance}</p>
-                  <p className="text-xs text-secondary-500 dark:text-secondary-300 mt-1">tokens</p>
+              <div className="relative overflow-hidden rounded-xl border border-primary-100 dark:border-secondary-700 bg-white dark:bg-secondary-900/50 p-5 shadow-sm">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 dark:from-primary-500/10 to-transparent" />
+                <div className="relative flex flex-col items-center text-center">
+                  <p className="text-xs font-bold text-secondary-500 dark:text-secondary-400 uppercase tracking-widest mb-2">Available</p>
+                  <div className="flex items-baseline gap-1">
+                    <p className="text-3xl font-black text-primary-600 dark:text-primary-400">{tokenBalance}</p>
+                    <p className="text-xs font-bold text-secondary-500/60 dark:text-secondary-500 uppercase tracking-tighter italic lg:hidden">tokens</p>
+                  </div>
+                  <p className="hidden lg:block text-xs font-bold text-secondary-500/60 dark:text-secondary-500 uppercase tracking-widest mt-1">tokens</p>
                 </div>
               </div>
 
               {/* Cost Card */}
-              <div className="relative overflow-hidden rounded-lg border border-amber-100 dark:border-amber-900 bg-white dark:bg-secondary-900 p-4">
-                <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent" />
-                <div className="relative">
-                  <p className="text-xs font-medium text-secondary-600 dark:text-secondary-400 mb-1">Per Analysis</p>
-                  <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{estimatedCost}</p>
-                  <p className="text-xs text-secondary-500 dark:text-secondary-300 mt-1">tokens</p>
+              <div className="relative overflow-hidden rounded-xl border border-amber-100 dark:border-amber-900 bg-white dark:bg-secondary-900/50 p-5 shadow-sm">
+                <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 dark:from-amber-600/10 to-transparent" />
+                <div className="relative flex flex-col items-center text-center">
+                  <p className="text-xs font-bold text-secondary-500 dark:text-secondary-400 uppercase tracking-widest mb-2">Per Analysis</p>
+                  <div className="flex items-baseline gap-1 text-center">
+                    <p className="text-3xl font-black text-amber-600 dark:text-amber-500">{estimatedCost}</p>
+                    <p className="text-xs font-bold text-secondary-500/60 dark:text-secondary-500 uppercase tracking-tighter italic lg:hidden">tokens</p>
+                  </div>
+                  <p className="hidden lg:block text-xs font-bold text-secondary-500/60 dark:text-secondary-500 uppercase tracking-widest mt-1">tokens</p>
                 </div>
               </div>
             </div>

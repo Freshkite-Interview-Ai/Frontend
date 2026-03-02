@@ -7,10 +7,10 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002/api/v1
  * Token storage keys
  */
 const TOKEN_KEYS = {
-  ACCESS_TOKEN: 'interview_ai_access_token',
-  REFRESH_TOKEN: 'interview_ai_refresh_token',
-  TOKEN_EXPIRY: 'interview_ai_token_expiry',
-  USER: 'interview_ai_user',
+  ACCESS_TOKEN: 'prephire_access_token',
+  REFRESH_TOKEN: 'prephire_refresh_token',
+  TOKEN_EXPIRY: 'prephire_token_expiry',
+  USER: 'prephire_user',
 };
 
 let pendingRefreshPromise: Promise<string | null> | null = null;

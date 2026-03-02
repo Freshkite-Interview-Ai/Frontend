@@ -99,35 +99,55 @@ export default function TokensPage() {
       />
 
       {/* Current Balance Hero Card */}
-      <div className="mb-12 relative overflow-hidden rounded-2xl border border-primary-200 dark:border-primary-800">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 via-primary-600/5 to-transparent dark:from-primary-500/20 dark:via-primary-600/10" />
-        <Card className="border-0 bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-950/30 dark:to-primary-900/20">
-          <CardContent className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 p-8">
+      <div className="mb-12 relative overflow-hidden rounded-2xl border border-primary-200 dark:border-secondary-700 shadow-xl shadow-primary-500/10 dark:shadow-none">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 via-primary-600/5 to-transparent dark:from-secondary-800/80 dark:via-secondary-800/40" />
+        <Card className="border-0 bg-gradient-to-br from-white to-primary-50 dark:from-secondary-900/40 dark:to-transparent backdrop-blur-sm">
+          <CardContent className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 p-10 relative z-10">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-primary-600 dark:text-primary-400">Your Balance</p>
-              <div className="mt-3 flex items-baseline gap-2">
-                <h3 className="text-5xl font-black text-primary-600 dark:text-primary-300">{tokenBalance}</h3>
-                <span className="text-xl font-semibold text-secondary-500 dark:text-secondary-400">tokens</span>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-primary-600 dark:text-primary-400 opacity-80 decoration-primary-200 underline-offset-4 decoration-2">
+                Your Current Wallet
+              </p>
+              <div className="mt-6 flex items-baseline gap-4">
+                <h3 className="text-7xl font-black tracking-tighter text-secondary-900 dark:text-white drop-shadow-sm">
+                  {tokenBalance}
+                </h3>
+                <span className="text-2xl font-bold bg-gradient-to-tr from-secondary-400 to-secondary-500 dark:from-secondary-400 dark:to-secondary-600 bg-clip-text text-transparent uppercase tracking-widest">
+                  tokens
+                </span>
               </div>
+              <div className="mt-8 flex items-center gap-2">
+                {tokenBalance > 0 ? (
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+                      Ready to practice
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20">
+                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                    <p className="text-sm font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+                      Low balance
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="flex flex-col gap-3 min-w-[240px]">
               {tokenBalance > 0 && (
-                <p className="text-sm text-secondary-600 dark:text-secondary-400 mt-3">
-                  ✓ Ready to practice! You have tokens available.
-                </p>
+                <Button
+                  onClick={() => router.replace('/dashboard')}
+                  className="w-full py-6 text-base font-black uppercase tracking-widest shadow-lg shadow-primary-500/20 hover:shadow-primary-500/40 transition-all hover:-translate-y-0.5"
+                >
+                  Dashboard <span className="ml-2">→</span>
+                </Button>
               )}
               {tokenBalance <= 0 && (
-                <p className="text-sm text-amber-600 dark:text-amber-400 mt-3 font-medium">
-                  ⚠ Get started by purchasing your first token pack
+                <p className="text-sm font-medium text-center text-secondary-500 dark:text-secondary-400 animate-bounce">
+                  Select a pack below to start ↴
                 </p>
               )}
             </div>
-            {tokenBalance > 0 && (
-              <Button
-                onClick={() => router.replace('/dashboard')}
-                className="px-8 py-3 text-base font-semibold"
-              >
-                Go to Dashboard →
-              </Button>
-            )}
           </CardContent>
         </Card>
       </div>

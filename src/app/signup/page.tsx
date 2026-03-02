@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { Button, Input, LoadingPage } from '@/components/ui';
+import { Button, Input, LoadingPage, Logo } from '@/components/ui';
 import { useAuth } from '@/hooks';
 import { companyAuthService } from '@/services';
 
@@ -74,24 +74,10 @@ function SignupPageContent() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center justify-center">
-            <div className="w-16 h-16 bg-primary-600 rounded-2xl mb-4 flex items-center justify-center">
-              <svg
-                className="w-10 h-10 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                />
-              </svg>
-            </div>
+          <Link href="/" className="inline-flex flex-col items-center justify-center group">
+            <Logo size="lg" iconOnly />
           </Link>
-          <h1 className="text-3xl font-bold text-secondary-900 dark:text-white">Create Account</h1>
+          <h1 className="mt-6 text-3xl font-bold text-secondary-900 dark:text-white">Create Account</h1>
           <p className="mt-2 text-secondary-600 dark:text-secondary-400">
             Start your interview preparation journey
           </p>
