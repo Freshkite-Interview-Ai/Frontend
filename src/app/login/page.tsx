@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { Button, Input, LoadingPage } from '@/components/ui';
+import { Button, Input, LoadingPage, Logo } from '@/components/ui';
 import { useAuth } from '@/hooks';
 import { companyAuthService } from '@/services';
 
@@ -79,27 +79,13 @@ function LoginPageContent() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex flex-col items-center justify-center group">
-            <div className="w-20 h-20 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl mb-4 flex items-center justify-center shadow-2xl shadow-primary-500/30 group-hover:shadow-primary-500/50 transition-all duration-300 group-hover:scale-105">
-              <svg
-                className="w-12 h-12 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                />
-              </svg>
-            </div>
+            <Logo size="lg" iconOnly />
           </Link>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-secondary-900 to-secondary-600 dark:from-white dark:to-secondary-300 bg-clip-text text-transparent">
+          <h1 className="mt-6 text-3xl font-bold bg-gradient-to-r from-secondary-900 to-secondary-600 dark:from-white dark:to-secondary-300 bg-clip-text text-transparent">
             Welcome Back
           </h1>
           <p className="mt-2 text-secondary-600 dark:text-secondary-400">
-            Sign in to continue to InterviewPrep
+            Sign in to continue to Prephire
           </p>
         </div>
 

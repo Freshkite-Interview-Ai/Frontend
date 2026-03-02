@@ -3,3 +3,4 @@ export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 export { LoadingSpinner, LoadingPage, LoadingOverlay } from './Loading';
 export { Input } from './Input';
 export { Badge } from './Badge';
+export { Logo } from './Logo';

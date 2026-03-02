@@ -97,7 +97,7 @@ export default function DashboardPage() {
   const { resume, setResume, setResumeLoading } = useAppStore();
   const [analytics, setAnalytics] = useState<UserAnalytics | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
-  const { isChecking: isPlanChecking } = useTokenGuard();
+  const { isChecking: isPlanChecking, tokenBalance } = useTokenGuard();
   
   const isLoading = status === 'loading';
   const isAuthenticated = status === 'authenticated';
@@ -151,6 +151,69 @@ export default function DashboardPage() {
         title={`Welcome back, ${user?.name || user?.email?.split('@')[0] || 'User'}!`}
         description="Ready to ace your next interview? Let's get started."
       />
+
+      {/* Token Balance Banner */}
+      <div className="mb-6">
+        <Card
+          className={`border overflow-hidden ${
+            tokenBalance <= 10
+              ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800'
+              : 'bg-gradient-to-r from-primary-50 to-violet-50 dark:from-primary-900/20 dark:to-violet-900/20 border-primary-100 dark:border-primary-800/60'
+          }`}
+        >
+          <CardContent>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div
+                  className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
+                    tokenBalance <= 10
+                      ? 'bg-amber-100 dark:bg-amber-900/50'
+                      : 'bg-primary-100 dark:bg-primary-900/50'
+                  }`}
+                >
+                  <svg
+                    className={`w-6 h-6 ${
+                      tokenBalance <= 10
+                        ? 'text-amber-600 dark:text-amber-400'
+                        : 'text-primary-600 dark:text-primary-400'
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-bold text-secondary-900 dark:text-white">{tokenBalance}</span>
+                    <span className="text-sm font-medium text-secondary-500 dark:text-secondary-400">tokens remaining</span>
+                  </div>
+                  <p className="text-sm text-secondary-500 dark:text-secondary-400 mt-0.5">
+                    {tokenBalance <= 10
+                      ? '⚠️ Running low — top up to keep practicing with AI'
+                      : 'Tokens power AI interviews, concept practice & resume analysis'}
+                  </p>
+                </div>
+              </div>
+              <Link href="/tokens" className="shrink-0">
+                <Button
+                  variant={tokenBalance <= 10 ? 'primary' : 'outline'}
+                  size="sm"
+                  className="rounded-xl w-full sm:w-auto"
+                >
+                  Buy More Tokens
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">

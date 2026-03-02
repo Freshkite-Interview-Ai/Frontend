@@ -12,6 +12,8 @@ body {
   font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background: #f9fafb;
+  color: #0f172a;
 }
 
 .font-brand {
@@ -52,7 +54,7 @@ body {
 
 /* Focus visible styles */
 *:focus-visible {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid #4f46e5;
   outline-offset: 2px;
 }
 
@@ -69,6 +71,19 @@ body {
   transition-property: background-color, border-color, color;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
+}
+
+/* Skeleton shimmer utility */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(90deg, #e2e8f0 0%, #f8fafc 50%, #e2e8f0 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+.dark .skeleton {
+  background: linear-gradient(90deg, #1f2937 0%, #111827 50%, #1f2937 100%);
 }
 
 /* Dropdown animation */

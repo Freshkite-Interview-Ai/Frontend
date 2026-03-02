@@ -423,7 +423,7 @@ export default function SettingsPage() {
       <div>
         <h3 className="text-lg font-semibold text-secondary-900 dark:text-white mb-4">Appearance</h3>
         <p className="text-sm text-secondary-500 dark:text-secondary-400 mb-6">
-          Customize how InterviewPrep looks on your device.
+          Customize how Prephire looks on your device.
         </p>
       </div>
 
