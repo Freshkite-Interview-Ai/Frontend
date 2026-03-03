@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Button, Logo } from '@/components/ui';
-
+ 
 /* ─────────────────────────────────────────────
    Static data
 ───────────────────────────────────────────── */
