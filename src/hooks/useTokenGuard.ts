@@ -45,6 +45,9 @@ export const useTokenGuard = (): UseTokenGuardResult => {
       }
 
       if (!backendAuthService.isAuthenticated()) {
+        // Backend token missing or expired — redirect to auth/callback to re-exchange
+        // The callback page will re-run the token exchange using the still-valid NextAuth session
+        router.replace('/auth/callback');
         return;
       }
 
