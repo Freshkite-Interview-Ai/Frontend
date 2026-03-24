@@ -193,7 +193,7 @@ export const backendAuthService = {
   },
 
   /**
-   * Check if user is authenticated (has valid tokens)
+   * Check if user is authenticated (has valid, non-expired tokens)
    */
   isAuthenticated: (): boolean => {
     const sessionStorage = getSessionStorage();
@@ -202,8 +202,21 @@ export const backendAuthService = {
 
     const accessToken = sessionStorage.getItem(TOKEN_KEYS.ACCESS_TOKEN);
     const refreshToken = localStorage.getItem(TOKEN_KEYS.REFRESH_TOKEN);
+    const expiry = sessionStorage.getItem(TOKEN_KEYS.TOKEN_EXPIRY);
 
-    return !!(accessToken && refreshToken);
+    if (!accessToken || !refreshToken) return false;
+
+    // If we have an expiry, treat an expired access token as not authenticated
+    // (the caller must use getAccessToken() which will trigger a refresh)
+    if (expiry) {
+      const expiryTime = parseInt(expiry, 10);
+      if (Date.now() > expiryTime) {
+        // Access token is expired; only considered authenticated if we can refresh
+        return !!refreshToken;
+      }
+    }
+
+    return true;
   },
 
   /**

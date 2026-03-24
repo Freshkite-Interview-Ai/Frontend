@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { DashboardLayout } from '@/components/layout';
 import { Card, CardContent, Button, LoadingPage, Badge } from '@/components/ui';
 import { useTheme } from '@/components/providers';
 import { userService } from '@/services/userService';
+import { backendAuthService } from '@/services';
 import { User } from '@/types';
 
 interface SettingSection {
@@ -299,6 +300,8 @@ export default function SettingsPage() {
       setIsSaving(true);
       setError(null);
       await userService.deleteAccount();
+      backendAuthService.clearTokens();
+      await signOut({ redirect: false });
       router.push('/login');
     } catch (err) {
       console.error('Failed to delete account:', err);
