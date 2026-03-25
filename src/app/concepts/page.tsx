@@ -12,9 +12,6 @@ import { useAppStore } from '@/store';
 import { conceptService, paymentService } from '@/services';
 import { Concept, ConceptDifficulty } from '@/types';
 
-// Groups for filtering
-const groups = ['All', 'Algorithms', 'Data Structures', 'System Design', 'Backend', 'Frontend', 'Database'];
-
 // Difficulty levels
 const difficulties: Array<'All' | ConceptDifficulty> = ['All', 'BEGINNER', 'INTERMEDIATE', 'ADVANCED'];
 
@@ -39,6 +36,7 @@ export default function ConceptsPage() {
   const [selectedDifficulty, setSelectedDifficulty] = useState<'All' | ConceptDifficulty>('All');
   const [tokenBalance, setTokenBalance] = useState(0);
   const [estimatedCost, setEstimatedCost] = useState(0);
+  const [groups, setGroups] = useState<string[]>([]);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -63,6 +61,22 @@ export default function ConceptsPage() {
     };
     loadTokenInfo();
   }, []);
+
+  // Load available groups from backend
+  useEffect(() => {
+    const loadGroups = async () => {
+      if (!isAuthenticated) return;
+      try {
+        const response = await conceptService.getGroups();
+        if (response.success && Array.isArray(response.data)) {
+          setGroups(response.data);
+        }
+      } catch (error) {
+        console.error('Failed to load concept groups:', error);
+      }
+    };
+    loadGroups();
+  }, [isAuthenticated]);
 
   // Load concepts from backend
   useEffect(() => {
@@ -237,7 +251,7 @@ export default function ConceptsPage() {
                   Category
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {groups.map((group) => (
+                  {['All', ...groups].map((group) => (
                     <button
                       key={group}
                       onClick={() => setSelectedGroup(group)}

@@ -38,6 +38,12 @@ export const conceptService = {
     );
     return response.data;
   },
+
+  // Get available concept groups (categories)
+  getGroups: async (): Promise<ApiResponse<string[]>> => {
+    const response = await apiClient.get<ApiResponse<string[]>>('/concepts/groups');
+    return response.data;
+  },
 };
 
 export default conceptService;

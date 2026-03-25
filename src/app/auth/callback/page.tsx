@@ -60,12 +60,13 @@ export default function AuthCallbackPage() {
           setUser(response.data);
         }
 
-        const isPaid = response?.data?.isPaid ?? false;
         const tokenBalance = response?.data?.tokenBalance ?? 0;
 
         hasRedirected = true;
 
-        if (!isPaid || tokenBalance <= 0) {
+        // Redirect based on token balance only — isPaid tracks purchase history,
+        // not access gating. New users with signup bonus tokens should go to dashboard.
+        if (tokenBalance <= 0) {
           router.replace('/tokens');
         } else {
           router.replace('/dashboard');
