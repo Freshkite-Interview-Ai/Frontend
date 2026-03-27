@@ -1,11 +1,30 @@
 // User Types
+export type TargetGoalType = 'product' | 'service' | 'faang' | 'custom';
+
+export interface CustomCriteria {
+  minRating?: number;
+  focusAreas?: string[];
+}
+
+export interface TargetGoal {
+  type: TargetGoalType;
+  customCriteria?: CustomCriteria;
+}
+
+export type AuthProvider = 'google' | 'local';
+
 export interface User {
   id: string;
   email: string;
+  name?: string;
   firstName: string;
-  lastName: string;
-  username: string;
+  lastName?: string;
+  mobile?: string;
+  username?: string;
+  authProvider?: AuthProvider;
+  emailVerified?: boolean;
   avatar?: string;
+  picture?: string;
   displayName?: string;
   bio?: string;
   location?: string;
@@ -20,6 +39,8 @@ export interface User {
   showAchievements?: boolean;
   isPaid?: boolean;
   tokenBalance?: number;
+  targetGoal?: TargetGoal;
+  onboardingCompleted?: boolean;
   createdAt?: string;
 }
 
@@ -354,5 +375,33 @@ export interface UserProblemStatus {
 
 export interface ProblemsByCategory {
   [category: string]: Problem[];
+}
+
+// Resume Improvement Types
+export type ImprovementType = 'keyword' | 'format' | 'impact' | 'ats';
+export type ImprovementPriority = 'high' | 'medium' | 'low';
+
+export interface Improvement {
+  type: ImprovementType;
+  priority: ImprovementPriority;
+  section: string;
+  currentText?: string;
+  suggestedText: string;
+  reason: string;
+}
+
+export interface ResumeImprovements {
+  id: string;
+  userId: string;
+  resumeId: string;
+  improvements: Improvement[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Recommended Concept Types
+export interface RecommendedConcept extends Concept {
+  relevanceScore: number;
+  reason: string;
 }
 

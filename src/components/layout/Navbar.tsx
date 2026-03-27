@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { Button, Logo } from '@/components/ui';
+import { TokenBadge } from '@/components/ui';
 import { useTheme } from '@/components/providers';
 import { companyAuthService } from '@/services';
 
@@ -188,6 +189,9 @@ export const Navbar: React.FC = () => {
 
             {isAuthenticated ? (
               <>
+                {/* Token Balance Badge */}
+                {!isCompanyRoute && <TokenBadge />}
+
                 {/* User Menu Dropdown */}
                 <div className="relative" ref={userMenuRef}>
                   <button

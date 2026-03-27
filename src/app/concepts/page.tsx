@@ -10,7 +10,7 @@ import { ConceptCard } from '@/components/features';
 import { useApi, useTokenGuard } from '@/hooks';
 import { useAppStore } from '@/store';
 import { conceptService, paymentService } from '@/services';
-import { Concept, ConceptDifficulty } from '@/types';
+import { Concept, ConceptDifficulty, RecommendedConcept } from '@/types';
 
 // Difficulty levels
 const difficulties: Array<'All' | ConceptDifficulty> = ['All', 'BEGINNER', 'INTERMEDIATE', 'ADVANCED'];
@@ -37,6 +37,8 @@ export default function ConceptsPage() {
   const [tokenBalance, setTokenBalance] = useState(0);
   const [estimatedCost, setEstimatedCost] = useState(0);
   const [groups, setGroups] = useState<string[]>([]);
+  const [recommendations, setRecommendations] = useState<RecommendedConcept[]>([]);
+  const [recommendationsLoading, setRecommendationsLoading] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -76,6 +78,25 @@ export default function ConceptsPage() {
       }
     };
     loadGroups();
+  }, [isAuthenticated]);
+
+  // Load recommended concepts
+  useEffect(() => {
+    const loadRecommendations = async () => {
+      if (!isAuthenticated) return;
+      try {
+        setRecommendationsLoading(true);
+        const response = await conceptService.getRecommendations();
+        if (response.success && Array.isArray(response.data)) {
+          setRecommendations(response.data.slice(0, 6));
+        }
+      } catch (error) {
+        console.error('Failed to load recommendations:', error);
+      } finally {
+        setRecommendationsLoading(false);
+      }
+    };
+    loadRecommendations();
   }, [isAuthenticated]);
 
   // Load concepts from backend
@@ -219,6 +240,57 @@ export default function ConceptsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Recommended for You */}
+      {recommendations.length > 0 && (
+        <Card className="mb-8">
+          <CardContent>
+            <h3 className="font-semibold text-secondary-900 dark:text-white mb-1 pt-4">
+              Recommended for You
+            </h3>
+            <p className="text-sm text-secondary-500 dark:text-secondary-400 mb-4">
+              Based on your target goal and practice history
+            </p>
+            {recommendationsLoading ? (
+              <div className="flex justify-center py-4">
+                <LoadingSpinner size="sm" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {recommendations.map((rec) => (
+                  <Link
+                    key={rec.id}
+                    href={`/concepts/${rec.id}`}
+                    className="flex items-start gap-3 p-3 rounded-xl border border-secondary-200 dark:border-secondary-700 hover:border-primary-300 dark:hover:border-primary-700 hover:bg-primary-50/50 dark:hover:bg-primary-900/20 transition-all"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-secondary-900 dark:text-white text-sm truncate">
+                        {rec.title}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge
+                          variant={
+                            rec.difficulty === 'ADVANCED'
+                              ? 'danger'
+                              : rec.difficulty === 'INTERMEDIATE'
+                              ? 'warning'
+                              : 'success'
+                          }
+                        >
+                          {rec.difficulty}
+                        </Badge>
+                        <span className="text-xs text-secondary-500 dark:text-secondary-400 truncate">
+                          {rec.reason}
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Filters */}
       <Card className="mb-8">

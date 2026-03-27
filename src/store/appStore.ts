@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Concept, Resume, Interview } from '@/types';
+import { Concept, Resume, Interview, ResumeImprovements } from '@/types';
 
 interface AppState {
   // Concepts
@@ -10,6 +10,8 @@ interface AppState {
   // Resume
   resume: Resume | null;
   resumeLoading: boolean;
+  resumeImprovements: ResumeImprovements | null;
+  resumeImprovementsLoading: boolean;
 
   // Interview
   currentInterview: Interview | null;
@@ -30,6 +32,8 @@ interface AppActions {
   // Resume
   setResume: (resume: Resume | null) => void;
   setResumeLoading: (loading: boolean) => void;
+  setResumeImprovements: (improvements: ResumeImprovements | null) => void;
+  setResumeImprovementsLoading: (loading: boolean) => void;
 
   // Interview
   setCurrentInterview: (interview: Interview | null) => void;
@@ -52,6 +56,8 @@ const initialState: AppState = {
   conceptsLoading: false,
   resume: null,
   resumeLoading: false,
+  resumeImprovements: null,
+  resumeImprovementsLoading: false,
   currentInterview: null,
   interviews: [],
   interviewLoading: false,
@@ -70,6 +76,8 @@ export const useAppStore = create<AppState & AppActions>((set) => ({
   // Resume
   setResume: (resume) => set({ resume }),
   setResumeLoading: (loading) => set({ resumeLoading: loading }),
+  setResumeImprovements: (improvements) => set({ resumeImprovements: improvements }),
+  setResumeImprovementsLoading: (loading) => set({ resumeImprovementsLoading: loading }),
 
   // Interview
   setCurrentInterview: (interview) => set({ currentInterview: interview }),

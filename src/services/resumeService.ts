@@ -1,5 +1,5 @@
 import apiClient from './api';
-import { Resume, ApiResponse } from '@/types';
+import { Resume, ResumeImprovements, ApiResponse } from '@/types';
 
 export const resumeService = {
   // Upload resume PDF
@@ -30,6 +30,12 @@ export const resumeService = {
   // Delete resume
   deleteResume: async (resumeId: string): Promise<void> => {
     await apiClient.delete(`/resume/${resumeId}`);
+  },
+
+  // Get AI resume improvement suggestions
+  getImprovements: async (): Promise<ApiResponse<ResumeImprovements | null>> => {
+    const response = await apiClient.get<ApiResponse<ResumeImprovements | null>>('/resume/improvements');
+    return response.data;
   },
 };
 

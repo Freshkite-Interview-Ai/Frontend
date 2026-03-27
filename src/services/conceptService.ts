@@ -1,5 +1,5 @@
 import apiClient from './api';
-import { Concept, ApiResponse, PaginatedResponse, ConceptDifficulty } from '@/types';
+import { Concept, RecommendedConcept, ApiResponse, PaginatedResponse, ConceptDifficulty } from '@/types';
 
 export const conceptService = {
   // Get all concepts with pagination and filters
@@ -42,6 +42,12 @@ export const conceptService = {
   // Get available concept groups (categories)
   getGroups: async (): Promise<ApiResponse<string[]>> => {
     const response = await apiClient.get<ApiResponse<string[]>>('/concepts/groups');
+    return response.data;
+  },
+
+  // Get recommended concepts based on user's target goal
+  getRecommendations: async (): Promise<ApiResponse<RecommendedConcept[]>> => {
+    const response = await apiClient.get<ApiResponse<RecommendedConcept[]>>('/concepts/recommendations');
     return response.data;
   },
 };

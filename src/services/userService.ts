@@ -1,5 +1,5 @@
 import apiClient from './api';
-import { ApiResponse, User } from '@/types';
+import { ApiResponse, User, TargetGoal } from '@/types';
 
 interface BackendUserResponse {
   id: string;
@@ -19,6 +19,8 @@ interface BackendUserResponse {
   showAchievements?: boolean;
   isPaid?: boolean;
   tokenBalance?: number;
+  targetGoal?: TargetGoal;
+  onboardingCompleted?: boolean;
   createdAt?: string;
 }
 
@@ -36,6 +38,8 @@ export interface UpdateUserSettingsPayload {
   profileVisibility?: 'public' | 'private';
   showActivity?: boolean;
   showAchievements?: boolean;
+  targetGoal?: TargetGoal;
+  onboardingCompleted?: boolean;
 }
 
 const mapBackendUserToUser = (backendUser: BackendUserResponse): User => {
@@ -60,6 +64,8 @@ const mapBackendUserToUser = (backendUser: BackendUserResponse): User => {
     showAchievements: backendUser.showAchievements,
     isPaid: backendUser.isPaid ?? false,
     tokenBalance: backendUser.tokenBalance ?? 0,
+    targetGoal: backendUser.targetGoal,
+    onboardingCompleted: backendUser.onboardingCompleted ?? false,
     createdAt: backendUser.createdAt,
   };
 };

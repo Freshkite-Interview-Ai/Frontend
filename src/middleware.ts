@@ -2,10 +2,8 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 
-// Define routes that should redirect authenticated users
 const authRoutes = ['/login', '/signup'];
 
-// Define protected routes that require authentication
 const protectedRoutePrefixes = [
   '/dashboard',
   '/concepts',
@@ -22,7 +20,6 @@ const protectedRoutePrefixes = [
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip API routes and static files
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
@@ -31,36 +28,48 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Get the session token
-  const token = await getToken({
+  // NextAuth session (Google OAuth users)
+  const nextAuthToken = await getToken({
     req: request,
     secret: process.env.NEXTAUTH_SECRET,
   });
 
-  const isAuthenticated = !!token;
+  // Local-auth cookie (email/password users)
+  const localAuthCookie = request.cookies.get('prephire_local_auth');
 
-  // Check if route is protected (excluding auth/callback which handles its own logic)
+  const isGoogleAuth = !!nextAuthToken;
+  const isLocalAuth = !!localAuthCookie?.value;
+  const isAuthenticated = isGoogleAuth || isLocalAuth;
+
   const isProtectedRoute = protectedRoutePrefixes.some(
     (route) => pathname === route || pathname.startsWith(route + '/')
   );
 
-  // Auth callback handles its own redirect logic
+  // /auth/callback only makes sense for Google OAuth users
   if (pathname === '/auth/callback') {
+    if (isLocalAuth && !isGoogleAuth) {
+      // Local users have nothing to do in the callback — send to dashboard
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
     if (!isAuthenticated) {
       return NextResponse.redirect(new URL('/login', request.url));
     }
     return NextResponse.next();
   }
 
-  // Check if route is an auth route (login/signup)
   const isAuthRoute = authRoutes.includes(pathname);
 
-  // Redirect authenticated users away from auth routes to auth/callback for proper routing
+  // Redirect authenticated users away from login/signup
   if (isAuthenticated && isAuthRoute) {
-    return NextResponse.redirect(new URL('/auth/callback', request.url));
+    if (isGoogleAuth) {
+      // Google users go through /auth/callback for token exchange + onboarding check
+      return NextResponse.redirect(new URL('/auth/callback', request.url));
+    }
+    // Local users are already fully set up — go straight to dashboard
+    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
-  // Redirect unauthenticated users to login for protected routes
+  // Protect dashboard/app routes from unauthenticated access
   if (!isAuthenticated && isProtectedRoute) {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('callbackUrl', `${pathname}${request.nextUrl.search}`);
@@ -72,14 +81,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api/auth (NextAuth routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public files
-     */
     '/((?!api/auth|_next/static|_next/image|favicon.ico|.*\\..*).*)',
   ],
 };

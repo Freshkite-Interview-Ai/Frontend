@@ -3,9 +3,6 @@ import logger from '@/lib/logger';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002/api/v1';
 
-/**
- * Token storage keys
- */
 const TOKEN_KEYS = {
   ACCESS_TOKEN: 'prephire_access_token',
   REFRESH_TOKEN: 'prephire_refresh_token',
@@ -25,21 +22,20 @@ const getLocalStorage = (): Storage | null => {
   return window.localStorage;
 };
 
-/**
- * User data stored with tokens
- */
 export interface StoredUser {
   id: string;
   email: string;
   name: string;
+  firstName: string;
+  lastName?: string;
+  mobile?: string;
   picture?: string;
+  authProvider?: 'google' | 'local';
+  emailVerified?: boolean;
   isPaid?: boolean;
   tokenBalance?: number;
 }
 
-/**
- * Auth response from backend
- */
 export interface AuthResponse {
   user: StoredUser;
   accessToken: string;
@@ -47,13 +43,81 @@ export interface AuthResponse {
   expiresIn: number;
 }
 
+export interface SignupInput {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName?: string;
+  mobile: string;
+}
+
 /**
  * Backend Auth Service
- * Handles token exchange and storage for custom JWT flow
+ * Handles all authentication flows: Google OAuth, email/password, OTP
  */
 export const backendAuthService = {
   /**
-   * Exchange Google ID token for our backend JWT
+   * Register with email + password. Backend sends OTP email.
+   */
+  signup: async (input: SignupInput): Promise<{ message: string; email: string }> => {
+    const response = await axios.post<{ success: boolean; data: { message: string; email: string } }>(
+      `${API_URL}/auth/signup`,
+      input
+    );
+    return response.data.data;
+  },
+
+  /**
+   * Verify OTP and activate account. Returns JWT tokens.
+   */
+  verifyOtp: async (email: string, otp: string): Promise<AuthResponse> => {
+    const response = await axios.post<{ success: boolean; data: AuthResponse }>(
+      `${API_URL}/auth/verify-otp`,
+      { email, otp }
+    );
+
+    if (response.data.success && response.data.data) {
+      const { accessToken, refreshToken, expiresIn, user } = response.data.data;
+      backendAuthService.setTokens(accessToken, refreshToken, expiresIn);
+      backendAuthService.setUser(user);
+      return response.data.data;
+    }
+
+    throw new Error('OTP verification failed');
+  },
+
+  /**
+   * Resend OTP to email.
+   */
+  resendOtp: async (email: string): Promise<{ message: string }> => {
+    const response = await axios.post<{ success: boolean; data: { message: string } }>(
+      `${API_URL}/auth/resend-otp`,
+      { email }
+    );
+    return response.data.data;
+  },
+
+  /**
+   * Login with email + password.
+   */
+  localLogin: async (email: string, password: string): Promise<AuthResponse> => {
+    const response = await axios.post<{ success: boolean; data: AuthResponse }>(
+      `${API_URL}/auth/login`,
+      { email, password }
+    );
+
+    if (response.data.success && response.data.data) {
+      const { accessToken, refreshToken, expiresIn, user } = response.data.data;
+      backendAuthService.setTokens(accessToken, refreshToken, expiresIn);
+      backendAuthService.setUser(user);
+      return response.data.data;
+    }
+
+    throw new Error('Login failed');
+  },
+
+  /**
+   * Exchange Google ID token for our backend JWT.
    */
   exchangeGoogleToken: async (googleIdToken: string): Promise<AuthResponse> => {
     const response = await axios.post<{ success: boolean; data: AuthResponse }>(
@@ -63,11 +127,8 @@ export const backendAuthService = {
 
     if (response.data.success && response.data.data) {
       const { accessToken, refreshToken, expiresIn, user } = response.data.data;
-      
-      // Store tokens
       backendAuthService.setTokens(accessToken, refreshToken, expiresIn);
       backendAuthService.setUser(user);
-
       return response.data.data;
     }
 
@@ -75,14 +136,11 @@ export const backendAuthService = {
   },
 
   /**
-   * Refresh access token using refresh token
+   * Refresh access token using refresh token (with dedup).
    */
   refreshAccessToken: async (): Promise<string | null> => {
     const refreshToken = backendAuthService.getRefreshToken();
-    
-    if (!refreshToken) {
-      return null;
-    }
+    if (!refreshToken) return null;
 
     try {
       const response = await axios.post<{
@@ -92,9 +150,7 @@ export const backendAuthService = {
 
       if (response.data.success && response.data.data) {
         const { accessToken, refreshToken: newRefreshToken, expiresIn } = response.data.data;
-        
         backendAuthService.setTokens(accessToken, newRefreshToken, expiresIn);
-        
         return accessToken;
       }
     } catch (error) {
@@ -105,24 +161,20 @@ export const backendAuthService = {
     return null;
   },
 
-  /**
-   * Store tokens in localStorage
-   */
   setTokens: (accessToken: string, refreshToken: string, expiresIn: number): void => {
     const sessionStorage = getSessionStorage();
     const localStorage = getLocalStorage();
     if (!sessionStorage || !localStorage) return;
 
     const expiryTime = Date.now() + expiresIn * 1000;
-
     sessionStorage.setItem(TOKEN_KEYS.ACCESS_TOKEN, accessToken);
     localStorage.setItem(TOKEN_KEYS.REFRESH_TOKEN, refreshToken);
     sessionStorage.setItem(TOKEN_KEYS.TOKEN_EXPIRY, expiryTime.toString());
+
+    // Set a cookie so Next.js middleware can recognise local-auth users
+    document.cookie = 'prephire_local_auth=1; path=/; SameSite=Strict; max-age=604800';
   },
 
-  /**
-   * Get access token (refreshes if expired)
-   */
   getAccessToken: async (): Promise<string | null> => {
     const sessionStorage = getSessionStorage();
     if (!sessionStorage) return null;
@@ -130,11 +182,8 @@ export const backendAuthService = {
     const accessToken = sessionStorage.getItem(TOKEN_KEYS.ACCESS_TOKEN);
     const expiry = sessionStorage.getItem(TOKEN_KEYS.TOKEN_EXPIRY);
 
-    if (!accessToken || !expiry) {
-      return null;
-    }
+    if (!accessToken || !expiry) return null;
 
-    // Check if token is expired (with 60 second buffer)
     const expiryTime = parseInt(expiry, 10);
     if (Date.now() > expiryTime - 60000) {
       if (!pendingRefreshPromise) {
@@ -148,43 +197,29 @@ export const backendAuthService = {
     return accessToken;
   },
 
-  /**
-   * Get access token synchronously (no refresh)
-   */
   getAccessTokenSync: (): string | null => {
     const sessionStorage = getSessionStorage();
     if (!sessionStorage) return null;
     return sessionStorage.getItem(TOKEN_KEYS.ACCESS_TOKEN);
   },
 
-  /**
-   * Get refresh token
-   */
   getRefreshToken: (): string | null => {
     const localStorage = getLocalStorage();
     if (!localStorage) return null;
     return localStorage.getItem(TOKEN_KEYS.REFRESH_TOKEN);
   },
 
-  /**
-   * Store user data
-   */
   setUser: (user: StoredUser): void => {
     const localStorage = getLocalStorage();
     if (!localStorage) return;
     localStorage.setItem(TOKEN_KEYS.USER, JSON.stringify(user));
   },
 
-  /**
-   * Get stored user data
-   */
   getUser: (): StoredUser | null => {
     const localStorage = getLocalStorage();
     if (!localStorage) return null;
-
     const userData = localStorage.getItem(TOKEN_KEYS.USER);
     if (!userData) return null;
-
     try {
       return JSON.parse(userData);
     } catch {
@@ -192,9 +227,6 @@ export const backendAuthService = {
     }
   },
 
-  /**
-   * Check if user is authenticated (has valid, non-expired tokens)
-   */
   isAuthenticated: (): boolean => {
     const sessionStorage = getSessionStorage();
     const localStorage = getLocalStorage();
@@ -206,12 +238,9 @@ export const backendAuthService = {
 
     if (!accessToken || !refreshToken) return false;
 
-    // If we have an expiry, treat an expired access token as not authenticated
-    // (the caller must use getAccessToken() which will trigger a refresh)
     if (expiry) {
       const expiryTime = parseInt(expiry, 10);
       if (Date.now() > expiryTime) {
-        // Access token is expired; only considered authenticated if we can refresh
         return !!refreshToken;
       }
     }
@@ -219,9 +248,6 @@ export const backendAuthService = {
     return true;
   },
 
-  /**
-   * Clear all tokens and user data (logout)
-   */
   clearTokens: (): void => {
     const sessionStorage = getSessionStorage();
     const localStorage = getLocalStorage();
@@ -231,18 +257,19 @@ export const backendAuthService = {
     localStorage.removeItem(TOKEN_KEYS.REFRESH_TOKEN);
     sessionStorage.removeItem(TOKEN_KEYS.TOKEN_EXPIRY);
     localStorage.removeItem(TOKEN_KEYS.USER);
+
+    // Clear the middleware auth cookie
+    document.cookie = 'prephire_local_auth=; path=/; SameSite=Strict; max-age=0';
   },
 
-  /**
-   * Logout - clear tokens and call backend
-   */
   logout: async (): Promise<void> => {
     try {
       const accessToken = backendAuthService.getAccessTokenSync();
+      const refreshToken = backendAuthService.getRefreshToken();
       if (accessToken) {
         await axios.post(
           `${API_URL}/auth/logout`,
-          {},
+          { refreshToken },
           { headers: { Authorization: `Bearer ${accessToken}` } }
         );
       }

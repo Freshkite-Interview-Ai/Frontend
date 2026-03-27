@@ -61,13 +61,15 @@ export default function AuthCallbackPage() {
         }
 
         const tokenBalance = response?.data?.tokenBalance ?? 0;
+        const onboardingCompleted = response?.data?.onboardingCompleted ?? false;
 
         hasRedirected = true;
 
-        // Redirect based on token balance only — isPaid tracks purchase history,
-        // not access gating. New users with signup bonus tokens should go to dashboard.
+        // Redirect based on onboarding status and token balance
         if (tokenBalance <= 0) {
           router.replace('/tokens');
+        } else if (!onboardingCompleted) {
+          router.replace('/onboarding');
         } else {
           router.replace('/dashboard');
         }
