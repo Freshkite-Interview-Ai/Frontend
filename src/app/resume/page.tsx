@@ -2,25 +2,21 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
 import { DashboardLayout, PageHeader } from '@/components/layout';
 import { Card, CardContent, Button, LoadingSpinner, Badge } from '@/components/ui';
 import { FileUpload, ResumeImprovements } from '@/components/features';
 import { useAppStore } from '@/store';
 import { resumeService, paymentService } from '@/services';
-import { useTokenGuard } from '@/hooks';
+import { useTokenGuard, useAuthStatus } from '@/hooks';
 
 const POLL_INTERVAL = 5000;
 const MAX_POLL_ATTEMPTS = 24; // 2 minutes max
 
 export default function ResumePage() {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { isAuthenticated, isLoading: authLoading } = useAuthStatus();
   const { resume, setResume, resumeLoading, setResumeLoading, resumeImprovements, setResumeImprovements, resumeImprovementsLoading, setResumeImprovementsLoading } = useAppStore();
   const { isChecking: isPlanChecking } = useTokenGuard();
-  
-  const isAuthenticated = status === 'authenticated';
-  const authLoading = status === 'loading';
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');

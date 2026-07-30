@@ -1,10 +1,15 @@
 import apiClient from './api';
-import { ApiResponse, User, TargetGoal } from '@/types';
+import { ApiResponse, User, TargetGoal, AuthProvider } from '@/types';
 
 interface BackendUserResponse {
   id: string;
   email: string;
   name: string;
+  firstName?: string;
+  lastName?: string;
+  mobile?: string;
+  authProvider?: AuthProvider;
+  emailVerified?: boolean;
   displayName?: string;
   bio?: string;
   location?: string;
@@ -43,12 +48,20 @@ export interface UpdateUserSettingsPayload {
 }
 
 const mapBackendUserToUser = (backendUser: BackendUserResponse): User => {
-  const [firstName, ...lastNameParts] = backendUser.name?.split(' ') || [''];
+  // Prefer the stored name parts; fall back to splitting the display name
+  const [splitFirstName, ...splitLastNameParts] = backendUser.name?.split(' ') || [''];
+  const firstName = backendUser.firstName || splitFirstName || '';
+  const lastName = backendUser.lastName ?? splitLastNameParts.join(' ');
+
   return {
     id: backendUser.id,
     email: backendUser.email,
-    firstName: firstName || '',
-    lastName: lastNameParts.join(' ') || '',
+    name: backendUser.name || [firstName, lastName].filter(Boolean).join(' '),
+    firstName,
+    lastName: lastName || '',
+    mobile: backendUser.mobile,
+    authProvider: backendUser.authProvider,
+    emailVerified: backendUser.emailVerified,
     username: backendUser.email?.split('@')[0] || '',
     displayName: backendUser.displayName,
     bio: backendUser.bio,

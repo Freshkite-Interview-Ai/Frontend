@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button, Input, LoadingPage, Logo } from '@/components/ui';
-import { useAuth } from '@/hooks';
+import { useAuth, useAuthStatus } from '@/hooks';
 import { backendAuthService } from '@/services';
 import { companyAuthService } from '@/services';
 import useAuthStore from '@/store/authStore';
@@ -42,7 +42,8 @@ function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login: googleLogin } = useAuth();
-  const { login: storeLogin, isAuthenticated } = useAuthStore();
+  const { isAuthenticated, isGoogleAuth } = useAuthStatus();
+  const { login: storeLogin } = useAuthStore();
 
   const [authMode, setAuthMode] = useState<'candidate' | 'company'>('candidate');
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -66,10 +67,16 @@ function LoginPageContent() {
     setError('');
   }, [authMode]);
 
-  // Redirect already-authenticated users (Google session)
+  // Redirect already-authenticated users
   useEffect(() => {
-    if (isAuthenticated) router.push('/auth/callback');
-  }, [isAuthenticated, router]);
+    if (isAuthenticated) {
+      if (isGoogleAuth) {
+        router.push('/auth/callback');
+      } else if (backendAuthService.isAuthenticated()) {
+        router.push('/dashboard');
+      }
+    }
+  }, [isAuthenticated, isGoogleAuth, router]);
 
   const handleLocalLogin = async (data: LoginForm) => {
     setError('');

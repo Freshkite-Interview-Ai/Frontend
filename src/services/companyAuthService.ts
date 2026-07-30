@@ -8,6 +8,13 @@ const STORAGE_KEYS = {
   COMPANY: 'company_profile',
 };
 
+const COMPANY_AUTH_COOKIE = 'prephire_company_auth';
+
+const notifyAuthChanged = (): void => {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new Event('prephire-auth-changed'));
+};
+
 interface CompanyAuthResponse {
   success?: boolean;
   data?: {
@@ -66,12 +73,16 @@ export const companyAuthService = {
     if (typeof window === 'undefined') return;
     sessionStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token);
     sessionStorage.setItem(STORAGE_KEYS.COMPANY, JSON.stringify(company));
+    document.cookie = `${COMPANY_AUTH_COOKIE}=1; path=/; SameSite=Strict; max-age=604800`;
+    notifyAuthChanged();
   },
 
   clearSession: () => {
     if (typeof window === 'undefined') return;
     sessionStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
     sessionStorage.removeItem(STORAGE_KEYS.COMPANY);
+    document.cookie = `${COMPANY_AUTH_COOKIE}=; path=/; SameSite=Strict; max-age=0`;
+    notifyAuthChanged();
   },
 
   getAccessToken: () => {

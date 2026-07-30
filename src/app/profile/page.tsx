@@ -1,16 +1,14 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { DashboardLayout } from '@/components/layout';
 import { Card, CardContent, Button, LoadingPage } from '@/components/ui';
-import { analyticsService, userService, audioService } from '@/services';
+import { analyticsService, audioService } from '@/services';
 import { ReportWithConcept } from '@/services/audioService';
-import { useAuthStore } from '@/store';
-import { useTokenGuard } from '@/hooks';
+import { useTokenGuard, useAuthStatus, useProfile } from '@/hooks';
 import { UserAnalyticsWithDetails } from '@/types';
 
 // Star rating component
@@ -33,19 +31,18 @@ const StarRating = ({ rating }: { rating: number }) => {
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { isAuthenticated, isLoading: authStatusLoading } = useAuthStatus();
   const [activeTab, setActiveTab] = useState<'overview' | 'activity' | 'achievements'>('overview');
   const [analytics, setAnalytics] = useState<UserAnalyticsWithDetails | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
   const [reports, setReports] = useState<ReportWithConcept[]>([]);
   const [reportsLoading, setReportsLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState<ReportWithConcept | null>(null);
-  const { user: storedUser, setUser } = useAuthStore();
+  // Same retrieval flow for Google and manually registered accounts
+  const { profile, user: storedUser } = useProfile();
   const { isChecking: isPlanChecking } = useTokenGuard();
 
-  const isLoading = status === 'loading';
-  const isAuthenticated = status === 'authenticated';
-  const user = session?.user;
+  const isLoading = authStatusLoading;
 
   const tokenBalance = storedUser?.tokenBalance ?? 0;
 
@@ -92,23 +89,6 @@ export default function ProfilePage() {
     };
     loadReports();
   }, [isAuthenticated]);
-
-  // Load user profile
-  useEffect(() => {
-    const loadUserProfile = async () => {
-      if (!isAuthenticated) return;
-      if (storedUser?.isPaid !== undefined && storedUser?.tokenBalance !== undefined) return;
-      try {
-        const response = await userService.getMe();
-        if (response?.data) {
-          setUser(response.data);
-        }
-      } catch (error) {
-        console.error('Failed to load profile:', error);
-      }
-    };
-    loadUserProfile();
-  }, [isAuthenticated, setUser, storedUser?.isPaid, storedUser?.tokenBalance]);
 
   if (isLoading || isPlanChecking) {
     return <LoadingPage message="Loading profile..." />;
@@ -400,65 +380,43 @@ export default function ProfilePage() {
     <DashboardLayout>
       <div className="max-w-6xl mx-auto">
         {/* Profile Header */}
-        <Card className="mb-8 overflow-hidden border-0 shadow-xl">
-          {/* Banner */}
-          <div className="h-36 sm:h-44 bg-gradient-to-br from-primary-600 via-primary-500 to-violet-500 relative">
-            <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
-
-            {/* Action Buttons on Banner */}
-            <div className="absolute top-4 right-4 flex gap-2">
-              <Link href="/tokens">
-                <Button size="sm" className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border-white/30 text-white shadow-lg">
-                  <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                  </svg>
-                  Buy Tokens
-                </Button>
-              </Link>
-              <Link href="/settings">
-                <Button size="sm" className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border-white/30 text-white shadow-lg">
-                  <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  Settings
-                </Button>
-              </Link>
-            </div>
-          </div>
-
-          <CardContent className="relative">
-            {/* Profile Info */}
-            <div className="flex flex-col sm:flex-row gap-5 -mt-16 sm:-mt-20">
+        <Card padding="lg" className="mb-8 shadow-card">
+          <CardContent>
+            {/* Identity row */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-5 sm:gap-6">
               {/* Avatar */}
-              <div className="relative flex-shrink-0">
-                {user?.image ? (
+              <div className="flex-shrink-0 mx-auto sm:mx-0">
+                {profile.image ? (
                   <Image
-                    src={user.image}
-                    alt={user.name || 'Profile'}
-                    width={140}
-                    height={140}
-                    className="w-28 h-28 sm:w-36 sm:h-36 rounded-2xl border-4 border-white dark:border-secondary-800 shadow-2xl object-cover ring-4 ring-primary-100 dark:ring-primary-900/50"
+                    src={profile.image}
+                    alt={profile.name}
+                    width={112}
+                    height={112}
+                    className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover shadow-card ring-1 ring-secondary-200 dark:ring-secondary-700"
                   />
                 ) : (
-                  <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-2xl border-4 border-white dark:border-secondary-800 shadow-2xl bg-gradient-to-br from-primary-400 to-violet-500 flex items-center justify-center ring-4 ring-primary-100 dark:ring-primary-900/50">
-                    <span className="text-4xl sm:text-5xl font-bold text-white">
-                      {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
+                  <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-card ring-1 ring-primary-500/20">
+                    <span className="text-3xl sm:text-4xl font-semibold text-white">
+                      {profile.initial}
                     </span>
                   </div>
                 )}
               </div>
 
               {/* User Details */}
-              <div className="flex-1 pt-2 sm:pt-8">
-                <h1 className="text-2xl sm:text-3xl font-bold text-secondary-900 dark:text-white tracking-tight">
-                  {user?.name || 'User'}
+              <div className="flex-1 min-w-0 text-center sm:text-left">
+                <h1 className="text-2xl sm:text-3xl font-bold text-secondary-900 dark:text-white tracking-tight truncate">
+                  {profile.name}
                 </h1>
-                <p className="text-secondary-500 dark:text-secondary-400 mt-0.5 text-sm sm:text-base">
-                  {user?.email}
+                <p className="text-secondary-500 dark:text-secondary-400 mt-1 text-sm sm:text-base truncate">
+                  {profile.email}
                 </p>
-                <div className="flex items-center gap-2 mt-3">
+                {profile.mobile && (
+                  <p className="text-secondary-500 dark:text-secondary-400 mt-0.5 text-sm">
+                    {profile.mobile}
+                  </p>
+                )}
+                <div className="flex items-center justify-center sm:justify-start flex-wrap gap-2 mt-3">
                   <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
                     tokenBalance > 0
                       ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white'
@@ -479,7 +437,24 @@ export default function ProfilePage() {
                     <span className={`w-1.5 h-1.5 rounded-full ${accountStatus === 'Active' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
                     {accountStatus}
                   </span>
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-secondary-100 text-secondary-600 dark:bg-secondary-700/60 dark:text-secondary-300">
+                    {profile.providerLabel}
+                  </span>
                 </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex sm:flex-col gap-2 sm:flex-shrink-0 justify-center">
+                <Link href="/tokens" className="flex-1 sm:flex-none">
+                  <Button size="sm" variant="secondary" fullWidth>
+                    Buy Tokens
+                  </Button>
+                </Link>
+                <Link href="/settings" className="flex-1 sm:flex-none">
+                  <Button size="sm" variant="secondary" fullWidth>
+                    Settings
+                  </Button>
+                </Link>
               </div>
             </div>
 
@@ -614,7 +589,7 @@ export default function ProfilePage() {
                   <div className="p-4 rounded-xl bg-secondary-50 dark:bg-secondary-800/50 border border-secondary-100 dark:border-secondary-700/50">
                     <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider font-medium mb-2">Member Since</p>
                     <p className="text-secondary-900 dark:text-white font-medium">
-                      {session?.user ? 'January 2026' : '-'}
+                      {profile.memberSince ?? '-'}
                     </p>
                   </div>
                 </div>

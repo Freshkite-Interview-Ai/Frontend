@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { LoadingPage } from '@/components/ui';
 import { backendAuthService, userService } from '@/services';
 import { useAuthStore } from '@/store';
+
+const MAX_RETRIES = 40; // 40 × 500ms = 20 seconds max wait
 
 export default function AuthCallbackPage() {
   const router = useRouter();
@@ -13,15 +15,18 @@ export default function AuthCallbackPage() {
   const { setUser } = useAuthStore();
   const [error, setError] = useState<string | null>(null);
 
+  // Use refs to avoid stale closure issues when deps change
+  const hasRedirected = useRef(false);
+  const hasFailed = useRef(false);
+  const isPending = useRef(false);
+  const retryCount = useRef(0);
+
   useEffect(() => {
     let isMounted = true;
-    let hasRedirected = false;
-    let hasFailed = false;
-    let isPending = false;
 
     const resolveRedirect = async () => {
       // Stop if already done, failed, or a request is already in-flight
-      if (hasRedirected || hasFailed || isPending) return;
+      if (hasRedirected.current || hasFailed.current || isPending.current) return;
       if (status === 'loading') return;
 
       if (status !== 'authenticated' || !session) {
@@ -33,27 +38,35 @@ export default function AuthCallbackPage() {
       if (!backendAuthService.isAuthenticated()) {
         const idToken = session?.idToken;
         if (!idToken) {
+          retryCount.current += 1;
+          // Timeout: give up after MAX_RETRIES
+          if (retryCount.current >= MAX_RETRIES) {
+            hasFailed.current = true;
+            if (isMounted) {
+              setError('Sign-in is taking too long. Please try again.');
+            }
+          }
           // Wait for idToken to be available in the session
           return;
         }
 
-        isPending = true;
+        isPending.current = true;
         try {
           await backendAuthService.exchangeGoogleToken(idToken);
         } catch (err) {
           console.error('Failed to exchange token with backend:', err);
-          hasFailed = true;
+          hasFailed.current = true;
           if (isMounted) {
             setError('Unable to complete sign in. Please try again.');
           }
           return;
         } finally {
-          isPending = false;
+          isPending.current = false;
         }
       }
 
       // Fetch user profile and determine redirect
-      isPending = true;
+      isPending.current = true;
       try {
         const response = await userService.getMe();
         if (isMounted && response?.data) {
@@ -63,7 +76,7 @@ export default function AuthCallbackPage() {
         const tokenBalance = response?.data?.tokenBalance ?? 0;
         const onboardingCompleted = response?.data?.onboardingCompleted ?? false;
 
-        hasRedirected = true;
+        hasRedirected.current = true;
 
         // Redirect based on onboarding status and token balance
         if (tokenBalance <= 0) {
@@ -75,12 +88,12 @@ export default function AuthCallbackPage() {
         }
       } catch (err) {
         console.error('Failed to resolve auth callback:', err);
-        hasFailed = true;
+        hasFailed.current = true;
         if (isMounted) {
           setError('Unable to complete sign in. Please try again.');
         }
       } finally {
-        isPending = false;
+        isPending.current = false;
       }
     };
 

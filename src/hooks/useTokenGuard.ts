@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { useSession } from 'next-auth/react';
 import { useAuthStore } from '@/store';
 import { userService, backendAuthService } from '@/services';
+import { useAuthStatus } from './useAuthStatus';
 
 // Pages that should NOT redirect to /tokens when balance is 0
 const TOKEN_REDIRECT_EXEMPT_PATHS = ['/tokens', '/profile', '/company'];
@@ -19,7 +19,7 @@ interface UseTokenGuardResult {
 export const useTokenGuard = (): UseTokenGuardResult => {
   const router = useRouter();
   const pathname = usePathname();
-  const { status } = useSession();
+  const { isAuthenticated, isLoading: authLoading, isGoogleAuth } = useAuthStatus();
   const { user, setUser } = useAuthStore();
   const [isChecking, setIsChecking] = useState(true);
   const [hasLoadedProfile, setHasLoadedProfile] = useState(false);
@@ -32,9 +32,12 @@ export const useTokenGuard = (): UseTokenGuardResult => {
     let isMounted = true;
 
     const loadUser = async () => {
-      if (status === 'loading') return;
+      if (authLoading) return;
 
-      if (status !== 'authenticated') {
+      if (!isAuthenticated) {
+        if (isMounted) {
+          setIsChecking(false);
+        }
         router.replace('/login');
         return;
       }
@@ -45,9 +48,16 @@ export const useTokenGuard = (): UseTokenGuardResult => {
       }
 
       if (!backendAuthService.isAuthenticated()) {
-        // Backend token missing or expired — redirect to auth/callback to re-exchange
-        // The callback page will re-run the token exchange using the still-valid NextAuth session
-        router.replace('/auth/callback');
+        if (isMounted) {
+          setIsChecking(false);
+        }
+        if (isGoogleAuth) {
+          // Google user without backend token — re-exchange via callback
+          router.replace('/auth/callback');
+        } else {
+          // Local user with stale/missing tokens — back to login
+          router.replace('/login');
+        }
         return;
       }
 
@@ -73,6 +83,7 @@ export const useTokenGuard = (): UseTokenGuardResult => {
 
     loadUser();
 
+    // Poll only until profile is loaded, then stop
     const pollId = window.setInterval(() => {
       if (!hasLoadedProfile) {
         loadUser();
@@ -84,7 +95,7 @@ export const useTokenGuard = (): UseTokenGuardResult => {
       window.clearInterval(pollId);
     };
 
-  }, [hasLoadedProfile, router, setUser, status]);
+  }, [hasLoadedProfile, router, setUser, isAuthenticated, authLoading, isGoogleAuth]);
 
   useEffect(() => {
     if (isChecking || !hasLoadedProfile) return;

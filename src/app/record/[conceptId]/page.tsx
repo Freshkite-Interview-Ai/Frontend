@@ -4,12 +4,11 @@ export const runtime = 'edge';
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { DashboardLayout, PageHeader } from '@/components/layout';
 import { Card, CardContent, Button, LoadingSpinner, Badge } from '@/components/ui';
 import { AudioRecorder, AudioReportCard } from '@/components/features';
-import { useTokenGuard } from '@/hooks';
+import { useTokenGuard, useAuthStatus } from '@/hooks';
 import { audioService, conceptService } from '@/services';
 import { Concept, AudioReport } from '@/types';
 
@@ -18,9 +17,7 @@ export default function RecordPage() {
   const params = useParams();
   const conceptId = params.conceptId as string;
 
-  const { data: session, status } = useSession();
-  const isAuthenticated = status === 'authenticated';
-  const authLoading = status === 'loading';
+  const { isAuthenticated, isLoading: authLoading } = useAuthStatus();
   const { isChecking: isPlanChecking } = useTokenGuard();
   
   const [concept, setConcept] = useState<Concept | null>(null);

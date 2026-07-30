@@ -2,14 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { DashboardLayout, PageHeader } from '@/components/layout';
 import { Card, CardContent, Button, LoadingPage, Badge } from '@/components/ui';
-import { useAppStore } from '@/store';
-import { useTokenGuard } from '@/hooks';
+import { useAppStore, useAuthStore } from '@/store';
+import { useTokenGuard, useAuthStatus } from '@/hooks';
 import { resumeService, analyticsService } from '@/services';
 import { UserAnalytics } from '@/types';
+import { TESTS_FEATURE_ENABLED } from '@/lib/featureFlags';
 
 interface QuickAction {
   title: string;
@@ -89,19 +89,37 @@ const quickActions: QuickAction[] = [
     color: 'bg-gradient-to-br from-green-100 to-green-200 text-green-600',
     darkColor: 'dark:from-green-900/50 dark:to-green-800/50 dark:text-green-400',
   },
+  {
+    title: 'Recruitment Tests',
+    description: 'Take company recruitment tests',
+    href: '/recruitment-tests',
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+      </svg>
+    ),
+    color: 'bg-gradient-to-br from-orange-100 to-orange-200 text-orange-600',
+    darkColor: 'dark:from-orange-900/50 dark:to-orange-800/50 dark:text-orange-400',
+  },
 ];
+
+// Tests feature is disabled — its card stays defined above but is filtered out.
+const visibleQuickActions = TESTS_FEATURE_ENABLED
+  ? quickActions
+  : quickActions.filter((action) => action.href !== '/recruitment-tests');
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { isAuthenticated, isLoading: authLoading, session } = useAuthStatus();
   const { resume, setResume, setResumeLoading } = useAppStore();
+  const { user: storedUser } = useAuthStore();
   const [analytics, setAnalytics] = useState<UserAnalytics | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
   const { isChecking: isPlanChecking, tokenBalance } = useTokenGuard();
   
-  const isLoading = status === 'loading';
-  const isAuthenticated = status === 'authenticated';
-  const user = session?.user;
+  const isLoading = authLoading;
+  // Use NextAuth session user for Google auth, fall back to auth store for local auth
+  const user = session?.user || (storedUser ? { name: `${storedUser.firstName || ''} ${storedUser.lastName || ''}`.trim(), email: storedUser.email } : null);
 
   // Load resume status and analytics from backend on mount
   useEffect(() => {
@@ -136,12 +154,17 @@ export default function DashboardPage() {
     loadData();
   }, [isAuthenticated, setResume, setResumeLoading]);
 
+  useEffect(() => {
+    if (!isLoading && !isPlanChecking && !isAuthenticated) {
+      router.replace('/login');
+    }
+  }, [isLoading, isPlanChecking, isAuthenticated, router]);
+
   if (isLoading || isPlanChecking) {
     return <LoadingPage message="Loading dashboard..." />;
   }
 
   if (!isAuthenticated) {
-    router.push('/login');
     return null;
   }
 
@@ -352,7 +375,7 @@ export default function DashboardPage() {
       <div className="mb-8">
         <h2 className="text-lg font-semibold text-secondary-900 dark:text-white mb-4">Quick Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {quickActions.map((action) => (
+          {visibleQuickActions.map((action) => (
             <Link key={action.href} href={action.href}>
               <Card hover className="h-full bg-white dark:bg-secondary-800 border-secondary-200 dark:border-secondary-700 group">
                 <CardContent>

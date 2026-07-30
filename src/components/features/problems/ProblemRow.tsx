@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { Problem, ProblemStatusValue } from '@/types';
 import { DifficultyBadge } from './DifficultyBadge';
 import { StatusDropdown } from './StatusDropdown';
@@ -92,6 +93,14 @@ export const ProblemRow: React.FC<ProblemRowProps> = ({
       </div>
 
       <div className="flex items-center gap-3 flex-shrink-0 ml-3">
+        {problem.solvable && (
+          <Link
+            href={`/problems/${problem.id}/solve`}
+            className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-900/50 transition-colors border border-primary-200 dark:border-primary-800"
+          >
+            Solve
+          </Link>
+        )}
         <DifficultyBadge difficulty={problem.difficulty} />
         <StatusDropdown
           currentStatus={status}

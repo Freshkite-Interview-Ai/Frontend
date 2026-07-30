@@ -1,13 +1,22 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { Suspense, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { DashboardLayout, PageHeader } from '@/components/layout';
-import { Card, CardContent, Button, LoadingSpinner, Badge, Input } from '@/components/ui';
+import {
+  Card,
+  CardContent,
+  Button,
+  LoadingSpinner,
+  LoadingPage,
+  Badge,
+  Input,
+  Toast,
+  TokenCostBadge,
+} from '@/components/ui';
 import { ConceptCard } from '@/components/features';
-import { useApi, useTokenGuard } from '@/hooks';
+import { useApi, useTokenGuard, useAuthStatus } from '@/hooks';
 import { useAppStore } from '@/store';
 import { conceptService, paymentService } from '@/services';
 import { Concept, ConceptDifficulty, RecommendedConcept } from '@/types';
@@ -22,14 +31,12 @@ const difficultyLabels: Record<string, string> = {
   ADVANCED: 'Advanced',
 };
 
-export default function ConceptsPage() {
+function ConceptsPageContent() {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const searchParams = useSearchParams();
+  const { isAuthenticated, isLoading: authLoading } = useAuthStatus();
   const { concepts, setConcepts, conceptsLoading, setConceptsLoading } = useAppStore();
   const { isChecking: isPlanChecking } = useTokenGuard();
-
-  const isAuthenticated = status === 'authenticated';
-  const authLoading = status === 'loading';
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGroup, setSelectedGroup] = useState('All');
@@ -39,12 +46,21 @@ export default function ConceptsPage() {
   const [groups, setGroups] = useState<string[]>([]);
   const [recommendations, setRecommendations] = useState<RecommendedConcept[]>([]);
   const [recommendationsLoading, setRecommendationsLoading] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       router.push('/login');
     }
   }, [authLoading, isAuthenticated, router]);
+
+  // Show the success snackbar after returning from the create page, then drop the flag
+  useEffect(() => {
+    if (searchParams?.get('created') === '1') {
+      setToastMessage('Concept created successfully.');
+      router.replace('/concepts');
+    }
+  }, [searchParams, router]);
 
   // Load token balance and audio practice cost from backend
   useEffect(() => {
@@ -135,6 +151,13 @@ export default function ConceptsPage() {
     return matchesSearch;
   });
 
+  // Distinguishes "you haven't created anything yet" from "filters matched nothing"
+  const hasNoConcepts =
+    concepts.length === 0 &&
+    searchQuery === '' &&
+    selectedGroup === 'All' &&
+    selectedDifficulty === 'All';
+
   if (authLoading || isPlanChecking) {
     return (
       <DashboardLayout>
@@ -153,93 +176,40 @@ export default function ConceptsPage() {
     <DashboardLayout>
       <PageHeader
         title="Concepts"
-        description="Browse and practice technical concepts to prepare for your interviews."
+        description="Your personal interview topics. Practice them by recording an answer."
+        action={
+          <Link href="/concepts/new">
+            <Button
+              leftIcon={
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v14m7-7H5" />
+                </svg>
+              }
+            >
+              New Concept
+            </Button>
+          </Link>
+        }
       />
 
-      {/* Token Information */}
-      <Card className="mb-8 border-primary-200 dark:border-primary-800 bg-gradient-to-br from-primary-50 dark:from-secondary-800/50 to-transparent dark:to-transparent">
-        <CardContent>
-          <div className="space-y-4 pt-6">
-            <div className="flex items-center justify-between border-b border-secondary-200/60 dark:border-secondary-700/60 pb-3 mb-4">
-              <h3 className="text-sm font-semibold text-secondary-700 dark:text-secondary-200 uppercase tracking-widest">
-                Token Status
-              </h3>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              {/* Balance Card */}
-              <div className="relative overflow-hidden rounded-xl border border-primary-100 dark:border-secondary-700 bg-white dark:bg-secondary-900/50 p-5 shadow-sm">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 dark:from-primary-500/10 to-transparent" />
-                <div className="relative flex flex-col items-center text-center">
-                  <p className="text-xs font-bold text-secondary-500 dark:text-secondary-400 uppercase tracking-widest mb-2">Available</p>
-                  <div className="flex items-baseline gap-1">
-                    <p className="text-3xl font-black text-primary-600 dark:text-primary-400">{tokenBalance}</p>
-                    <p className="text-xs font-bold text-secondary-500/60 dark:text-secondary-500 uppercase tracking-tighter italic lg:hidden">tokens</p>
-                  </div>
-                  <p className="hidden lg:block text-xs font-bold text-secondary-500/60 dark:text-secondary-500 uppercase tracking-widest mt-1">tokens</p>
-                </div>
-              </div>
-
-              {/* Cost Card */}
-              <div className="relative overflow-hidden rounded-xl border border-amber-100 dark:border-amber-900 bg-white dark:bg-secondary-900/50 p-5 shadow-sm">
-                <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 dark:from-amber-600/10 to-transparent" />
-                <div className="relative flex flex-col items-center text-center">
-                  <p className="text-xs font-bold text-secondary-500 dark:text-secondary-400 uppercase tracking-widest mb-2">Per Analysis</p>
-                  <div className="flex items-baseline gap-1 text-center">
-                    <p className="text-3xl font-black text-amber-600 dark:text-amber-500">{estimatedCost}</p>
-                    <p className="text-xs font-bold text-secondary-500/60 dark:text-secondary-500 uppercase tracking-tighter italic lg:hidden">tokens</p>
-                  </div>
-                  <p className="hidden lg:block text-xs font-bold text-secondary-500/60 dark:text-secondary-500 uppercase tracking-widest mt-1">tokens</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Status Indicator */}
-            {estimatedCost <= tokenBalance && tokenBalance > 0 ? (
-              <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800/50 flex items-center gap-2">
-                <svg className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                <p className="text-sm text-emerald-700 dark:text-emerald-200 font-medium">
-                  Ready to practice! You have sufficient tokens
-                </p>
-              </div>
-            ) : estimatedCost > tokenBalance ? (
-              <div className="space-y-2">
-                <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800/50 flex items-center gap-2">
-                  <svg className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                  <p className="text-sm text-amber-700 dark:text-amber-200 font-medium">
-                    Need {estimatedCost - tokenBalance} more tokens
-                  </p>
-                </div>
-                <Link href="/tokens" className="w-full block">
-                  <Button size="sm" className="w-full">
-                    Buy Tokens Now
-                  </Button>
-                </Link>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800/50 flex items-center gap-2">
-                  <svg className="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M13.477 14.89A6 6 0 015.11 2.522a6 6 0 018.367 8.368zM9 13a4 4 0 100-8 4 4 0 000 8zm4.882-3.118a.75.75 0 10-1.06-1.061A2.25 2.25 0 1112.75 9a.75.75 0 01-1.5 0 3.75 3.75 0 00-3.868-3.868z" clipRule="evenodd" />
-                  </svg>
-                  <p className="text-sm text-red-700 dark:text-red-200 font-medium">
-                    No tokens available. Start practicing by purchasing tokens
-                  </p>
-                </div>
-                <Link href="/tokens" className="w-full block">
-                  <Button size="sm" className="w-full">
-                    Get Tokens
-                  </Button>
-                </Link>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Token summary - compact, informative, visually lightweight */}
+      <div className="mb-8 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
+        <TokenCostBadge cost={estimatedCost} />
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-secondary-200 dark:border-secondary-700 bg-secondary-50 dark:bg-secondary-800/70 px-3 py-1 text-xs font-medium text-secondary-600 dark:text-secondary-300">
+          <span className="text-secondary-500/80 dark:text-secondary-400">Balance</span>
+          <span className="font-semibold tabular-nums text-secondary-900 dark:text-white">
+            {tokenBalance} Tokens
+          </span>
+        </span>
+        {estimatedCost > tokenBalance && (
+          <Link
+            href="/tokens"
+            className="text-xs font-semibold text-primary-600 dark:text-primary-400 hover:underline"
+          >
+            Need {estimatedCost - tokenBalance} more &mdash; buy tokens
+          </Link>
+        )}
+      </div>
 
       {/* Recommended for You */}
       {recommendations.length > 0 && (
@@ -260,7 +230,7 @@ export default function ConceptsPage() {
                 {recommendations.map((rec) => (
                   <Link
                     key={rec.id}
-                    href={`/concepts/${rec.id}`}
+                    href={`/record/${rec.id}`}
                     className="flex items-start gap-3 p-3 rounded-xl border border-secondary-200 dark:border-secondary-700 hover:border-primary-300 dark:hover:border-primary-700 hover:bg-primary-50/50 dark:hover:bg-primary-900/20 transition-all"
                   >
                     <div className="flex-1 min-w-0">
@@ -371,9 +341,9 @@ export default function ConceptsPage() {
           <LoadingSpinner size="lg" />
         </div>
       ) : filteredConcepts.length === 0 ? (
-        <Card>
+        <Card padding="lg">
           <CardContent>
-            <div className="text-center py-12">
+            <div className="text-center py-12 max-w-md mx-auto">
               <svg
                 className="w-16 h-16 text-secondary-300 dark:text-secondary-600 mx-auto mb-4"
                 fill="none"
@@ -387,10 +357,19 @@ export default function ConceptsPage() {
                   d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              <h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-2">No concepts found</h3>
+              <h3 className="text-lg font-semibold text-secondary-900 dark:text-white mb-2">
+                {hasNoConcepts ? 'No concepts yet' : 'No concepts found'}
+              </h3>
               <p className="text-secondary-600 dark:text-secondary-400">
-                Try adjusting your search or filter criteria.
+                {hasNoConcepts
+                  ? 'Create your first concept and start practicing with a question of your own.'
+                  : 'Try adjusting your search or filter criteria.'}
               </p>
+              {hasNoConcepts && (
+                <Link href="/concepts/new" className="inline-block mt-6">
+                  <Button>Create Concept</Button>
+                </Link>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -408,6 +387,18 @@ export default function ConceptsPage() {
           Showing {filteredConcepts.length} of {concepts.length} concepts
         </p>
       )}
+
+      {toastMessage && (
+        <Toast message={toastMessage} variant="success" onClose={() => setToastMessage('')} />
+      )}
     </DashboardLayout>
+  );
+}
+
+export default function ConceptsPage() {
+  return (
+    <Suspense fallback={<LoadingPage message="Loading concepts..." />}>
+      <ConceptsPageContent />
+    </Suspense>
   );
 }

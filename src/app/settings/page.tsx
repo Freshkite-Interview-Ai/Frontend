@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSession, signOut } from 'next-auth/react';
+import { signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { DashboardLayout } from '@/components/layout';
@@ -9,6 +9,7 @@ import { Card, CardContent, Button, LoadingPage, Badge } from '@/components/ui';
 import { useTheme } from '@/components/providers';
 import { userService } from '@/services/userService';
 import { backendAuthService } from '@/services';
+import { useAuthStatus, useProfile } from '@/hooks';
 import { User } from '@/types';
 
 interface SettingSection {
@@ -102,7 +103,9 @@ const ToggleSwitch = ({ enabled, onToggle }: { enabled: boolean; onToggle: () =>
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { isAuthenticated, isLoading: authStatusLoading } = useAuthStatus();
+  // Same profile source for Google and manually registered accounts
+  const { profile } = useProfile();
   const { theme, setTheme } = useTheme();
   const [activeSection, setActiveSection] = useState('profile');
   
@@ -130,9 +133,7 @@ export default function SettingsPage() {
   const [showActivity, setShowActivity] = useState(true);
   const [showAchievements, setShowAchievements] = useState(true);
 
-  const isLoading = status === 'loading';
-  const isAuthenticated = status === 'authenticated';
-  const user = session?.user;
+  const isLoading = authStatusLoading;
 
   // Load user settings on mount
   useEffect(() => {
@@ -329,33 +330,37 @@ export default function SettingsPage() {
       </div>
 
       {/* Avatar Section */}
-      <div className="flex items-center gap-6 p-6 bg-secondary-50 dark:bg-secondary-700/50 rounded-2xl">
-        <div className="relative group">
-          {user?.image ? (
+      <div className="flex flex-col sm:flex-row sm:items-center gap-5 sm:gap-6 p-6 rounded-2xl border border-secondary-200 dark:border-secondary-700 bg-secondary-50/70 dark:bg-secondary-800/40">
+        <div className="flex-shrink-0 mx-auto sm:mx-0">
+          {profile.image ? (
             <Image
-              src={user.image}
-              alt={user.name || 'Profile'}
+              src={profile.image}
+              alt={profile.name}
               width={80}
               height={80}
-              className="w-20 h-20 rounded-2xl object-cover"
+              className="w-20 h-20 rounded-2xl object-cover shadow-card ring-1 ring-secondary-200 dark:ring-secondary-700"
             />
           ) : (
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center">
-              <span className="text-2xl font-bold text-white">
-                {user?.name?.[0]?.toUpperCase() || 'U'}
-              </span>
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-card ring-1 ring-primary-500/20">
+              <span className="text-2xl font-semibold text-white">{profile.initial}</span>
             </div>
           )}
         </div>
-        <div className="flex-1">
-          <h4 className="font-medium text-secondary-900 dark:text-white mb-1">Profile Photo</h4>
-          <p className="text-sm text-secondary-500 dark:text-secondary-400 mb-3">
-            JPG, GIF or PNG. Max size of 2MB.
+        <div className="flex-1 text-center sm:text-left">
+          <h4 className="font-semibold text-secondary-900 dark:text-white">{profile.name}</h4>
+          <p className="text-sm text-secondary-500 dark:text-secondary-400 mt-0.5 break-all">
+            {profile.email}
           </p>
-          <div className="flex gap-3">
+          <p className="text-xs text-secondary-400 dark:text-secondary-500 mt-2">
+            Signed in with {profile.providerLabel}
+          </p>
+          <div className="flex flex-wrap justify-center sm:justify-start gap-3 mt-4">
             <Button size="sm">Upload Photo</Button>
             <Button size="sm" variant="outline">Remove</Button>
           </div>
+          <p className="text-xs text-secondary-400 dark:text-secondary-500 mt-2">
+            JPG, GIF or PNG. Max size of 2MB.
+          </p>
         </div>
       </div>
 
@@ -367,7 +372,7 @@ export default function SettingsPage() {
           </label>
           <input
             type="text"
-            value={displayName || user?.name || ''}
+            value={displayName || profile.name}
             onChange={(e) => setDisplayName(e.target.value)}
             className="w-full px-4 py-3 rounded-xl border border-secondary-200 dark:border-secondary-600 bg-white dark:bg-secondary-700 text-secondary-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
             placeholder="Your display name"
@@ -379,11 +384,24 @@ export default function SettingsPage() {
           </label>
           <input
             type="email"
-            value={user?.email || ''}
+            value={profile.email}
             disabled
             className="w-full px-4 py-3 rounded-xl border border-secondary-200 dark:border-secondary-600 bg-secondary-50 dark:bg-secondary-800 text-secondary-500 dark:text-secondary-400 cursor-not-allowed"
           />
-          <p className="text-xs text-secondary-400 dark:text-secondary-500 mt-1">Email is managed by Google</p>
+          <p className="text-xs text-secondary-400 dark:text-secondary-500 mt-1">
+            Email is linked to your {profile.providerLabel} sign-in and cannot be changed here.
+          </p>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
+            Phone
+          </label>
+          <input
+            type="tel"
+            value={profile.mobile || 'Not provided'}
+            disabled
+            className="w-full px-4 py-3 rounded-xl border border-secondary-200 dark:border-secondary-600 bg-secondary-50 dark:bg-secondary-800 text-secondary-500 dark:text-secondary-400 cursor-not-allowed"
+          />
         </div>
         <div className="md:col-span-2">
           <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
@@ -677,8 +695,14 @@ export default function SettingsPage() {
                 </svg>
               </div>
               <div>
-                <p className="font-medium text-secondary-900 dark:text-white">Google Authentication</p>
-                <p className="text-sm text-secondary-500 dark:text-secondary-400">Connected via Google OAuth</p>
+                <p className="font-medium text-secondary-900 dark:text-white">
+                  {profile.providerLabel === 'Google' ? 'Google Authentication' : 'Email & Password'}
+                </p>
+                <p className="text-sm text-secondary-500 dark:text-secondary-400">
+                  {profile.providerLabel === 'Google'
+                    ? 'Connected via Google OAuth'
+                    : 'Signed in with your email and password'}
+                </p>
               </div>
             </div>
             <Badge variant="success">Connected</Badge>
@@ -724,13 +748,37 @@ export default function SettingsPage() {
           <div className="p-4 bg-white dark:bg-secondary-800 rounded-xl border border-secondary-200 dark:border-secondary-600">
             <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-1">Account Type</p>
             <div className="flex items-center gap-2">
-              <p className="text-secondary-900 dark:text-white font-medium">Pro Member</p>
-              <Badge variant="primary">Active</Badge>
+              <p className="text-secondary-900 dark:text-white font-medium">
+                {userData?.isPaid ? 'Pro Member' : 'Free'}
+              </p>
+              <Badge variant={userData?.isPaid ? 'primary' : 'default'}>
+                {userData?.isPaid ? 'Active' : 'Inactive'}
+              </Badge>
             </div>
           </div>
           <div className="p-4 bg-white dark:bg-secondary-800 rounded-xl border border-secondary-200 dark:border-secondary-600">
             <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-1">Member Since</p>
-            <p className="text-secondary-900 dark:text-white font-medium">January 2026</p>
+            <p className="text-secondary-900 dark:text-white font-medium">
+              {profile.memberSince ?? '-'}
+            </p>
+          </div>
+          <div className="p-4 bg-white dark:bg-secondary-800 rounded-xl border border-secondary-200 dark:border-secondary-600">
+            <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-1">Email</p>
+            <p className="text-secondary-900 dark:text-white font-medium break-all">
+              {profile.email || '-'}
+            </p>
+          </div>
+          <div className="p-4 bg-white dark:bg-secondary-800 rounded-xl border border-secondary-200 dark:border-secondary-600">
+            <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-1">Phone</p>
+            <p className="text-secondary-900 dark:text-white font-medium">
+              {profile.mobile ?? 'Not provided'}
+            </p>
+          </div>
+          <div className="p-4 bg-white dark:bg-secondary-800 rounded-xl border border-secondary-200 dark:border-secondary-600 md:col-span-2">
+            <p className="text-xs text-secondary-500 dark:text-secondary-400 uppercase tracking-wider mb-1">Token Balance</p>
+            <p className="text-secondary-900 dark:text-white font-medium tabular-nums">
+              {userData?.tokenBalance ?? 0} Tokens
+            </p>
           </div>
         </div>
       </div>

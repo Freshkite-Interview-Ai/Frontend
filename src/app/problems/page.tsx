@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
 import { DashboardLayout } from '@/components/layout';
 import {
   CollapsibleCategory,
@@ -10,6 +9,7 @@ import {
   LoadingSkeleton,
 } from '@/components/features/problems';
 import { problemService } from '@/services/problemService';
+import { useAuthStatus } from '@/hooks';
 import {
   Problem,
   ProblemDifficulty,
@@ -19,7 +19,7 @@ import {
 
 export default function ProblemsPage() {
   const router = useRouter();
-  const { status } = useSession();
+  const { isAuthenticated, isLoading: authLoading } = useAuthStatus();
 
   const [problems, setProblems] = useState<Problem[]>([]);
   const [statusMap, setStatusMap] = useState<Record<string, ProblemStatusValue>>({});
@@ -32,8 +32,8 @@ export default function ProblemsPage() {
   const [statusFilter, setStatusFilter] = useState<ProblemStatusValue | 'none' | ''>('');
 
   useEffect(() => {
-    if (status === 'loading') return;
-    if (status !== 'authenticated') {
+    if (authLoading) return;
+    if (!isAuthenticated) {
       router.push('/login');
       return;
     }
@@ -66,7 +66,7 @@ export default function ProblemsPage() {
     };
 
     loadData();
-  }, [status, router]);
+  }, [authLoading, isAuthenticated, router]);
 
   const handleStatusChange = useCallback(
     async (problemId: string, newStatus: ProblemStatusValue) => {
@@ -143,7 +143,7 @@ export default function ProblemsPage() {
     return { completed, pass, fail, easy, medium, hard, totalEasy, totalMedium, totalHard };
   }, [problems, statusMap]);
 
-  if (status === 'loading') {
+  if (authLoading) {
     return (
       <DashboardLayout>
         <LoadingSkeleton />

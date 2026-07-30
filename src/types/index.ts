@@ -168,6 +168,7 @@ export type ConceptDifficulty = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
 
 export interface Concept {
   id: string;
+  userId: string; // Owner of the concept (concepts are private to their creator)
   title: string;
   description: string;
   group: string; // Category/Group (e.g., "Algorithms", "Data Structures")
@@ -196,6 +197,129 @@ export interface Resume {
   mimeType: string;
   uploadedAt: string;
   status: 'pending' | 'processed' | 'analyzed';
+}
+
+// ===== Recruitment Test Types =====
+
+export type QuestionType = 'MCQ' | 'SHORT' | 'CODE';
+export type TestStatus = 'draft' | 'published';
+export type AttemptStatus = 'in_progress' | 'completed' | 'auto_submitted' | 'violation_terminated';
+
+export interface TestCase {
+  input: string;
+  output: string;
+}
+
+export interface TestEligibility {
+  degrees: string[];
+  skills: string[];
+  tags: string[];
+}
+
+export interface RecruitmentTest {
+  id: string;
+  companyId: string;
+  title: string;
+  description: string;
+  passMark?: number;
+  duration: number;
+  startTime: string;
+  endTime: string;
+  eligibility: TestEligibility;
+  status: TestStatus;
+  questionCount: number;
+  attempted?: boolean;
+  attemptStatus?: AttemptStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TestQuestion {
+  id: string;
+  testId: string;
+  type: QuestionType;
+  questionText: string;
+  options?: string[];
+  languageSupport?: string[];
+  testCases?: { input: string; output?: string }[];
+  testCaseCount?: number;
+  marks: number;
+  difficulty: 'EASY' | 'MEDIUM' | 'HARD';
+  order: number;
+}
+
+export interface TestQuestionFull extends TestQuestion {
+  correctAnswer?: string;
+  testCases?: { input: string; output?: string }[];
+}
+
+export interface TestAttempt {
+  id: string;
+  testId: string;
+  candidateId: string;
+  startTime: string;
+  endTime?: string;
+  status: AttemptStatus;
+  score?: number;
+  maxScore?: number;
+  timeTakenMs?: number;
+  violations: number;
+  submittedAt?: string;
+  createdAt: string;
+}
+
+export interface TestAnswer {
+  id: string;
+  attemptId: string;
+  questionId: string;
+  answer?: string;
+  codeSubmission?: string;
+  language?: string;
+  isCorrect?: boolean;
+  score?: number;
+  codeResults?: CodeExecutionResult[];
+  createdAt: string;
+}
+
+export interface CodeExecutionResult {
+  testCaseIndex: number;
+  input: string;
+  expectedOutput: string;
+  actualOutput: string;
+  passed: boolean;
+  executionTime?: number;
+  error?: string;
+}
+
+export interface TestAttemptWithCandidate extends TestAttempt {
+  candidateName?: string;
+  candidateEmail?: string;
+}
+
+export interface TestAnalytics {
+  totalCandidates: number;
+  totalSubmissions: number;
+  averageScore: number;
+  highestScore: number;
+  lowestScore: number;
+  passRate: number;
+  completionRate: number;
+  passMark: number;
+}
+
+export interface TestSubmission {
+  id: string;
+  candidateId: string;
+  candidateName?: string;
+  candidateEmail?: string;
+  status: AttemptStatus;
+  scorePercent: number;
+  score?: number;
+  maxScore?: number;
+  timeTakenMs?: number;
+  submittedAt?: string;
+  rank: number;
+  pass: boolean;
 }
 
 // Interview Types
@@ -361,6 +485,7 @@ export interface Problem {
   tags: string[];
   isNew: boolean;
   order: number;
+  solvable?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -403,5 +528,66 @@ export interface ResumeImprovements {
 export interface RecommendedConcept extends Concept {
   relevanceScore: number;
   reason: string;
+}
+
+// ===== Problem Solver Types =====
+
+export type SubmissionStatus = 'passed' | 'failed';
+export type SubmissionContext = 'practice' | 'test' | 'interview';
+
+export interface ProblemExample {
+  input: string;
+  output: string;
+  explanation?: string;
+}
+
+export interface ProblemTestCaseVisible {
+  input: string;
+  expectedOutput: string;
+}
+
+export interface SolvableProblem extends Problem {
+  description?: string;
+  constraints?: string;
+  examples?: ProblemExample[];
+  boilerplate?: Record<string, string>;
+  functionName?: string;
+  solvable: boolean;
+}
+
+export interface SubmissionTestResult {
+  testCaseIndex: number;
+  input: string;
+  expectedOutput: string;
+  actualOutput: string;
+  passed: boolean;
+  executionTime?: number;
+  error?: string;
+}
+
+export interface ProblemSubmission {
+  id: string;
+  userId: string;
+  problemId: string;
+  code: string;
+  language: string;
+  status: SubmissionStatus;
+  results: SubmissionTestResult[];
+  passedCount: number;
+  totalCount: number;
+  context: SubmissionContext;
+  contextId?: string;
+  createdAt: string;
+}
+
+export interface ProblemSolveData {
+  problem: SolvableProblem;
+  visibleTestCases: ProblemTestCaseVisible[];
+  submission: ProblemSubmission | null;
+  locked: boolean;
+}
+
+export interface RunCodeResponse {
+  results: SubmissionTestResult[];
 }
 

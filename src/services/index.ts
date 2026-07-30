@@ -9,5 +9,8 @@ export { default as userService } from './userService';
 export { backendAuthService } from './backendAuth';
 export { analyticsService } from './analyticsService';
 export { default as problemService } from './problemService';
+export { problemSolverService } from './problemSolverService';
 export { companyAuthService } from './companyAuthService';
 export { companyCandidatesService } from './companyCandidatesService';
+export { companyTestService } from './companyTestService';
+export { recruitmentTestService } from './recruitmentTestService';

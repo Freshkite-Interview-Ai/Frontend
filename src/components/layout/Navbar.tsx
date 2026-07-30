@@ -8,7 +8,10 @@ import { useSession, signOut } from 'next-auth/react';
 import { Button, Logo } from '@/components/ui';
 import { TokenBadge } from '@/components/ui';
 import { useTheme } from '@/components/providers';
-import { companyAuthService } from '@/services';
+import { backendAuthService, companyAuthService } from '@/services';
+import { useAuthStatus } from '@/hooks';
+import useAuthStore from '@/store/authStore';
+import { TESTS_FEATURE_ENABLED } from '@/lib/featureFlags';
 
 interface NavItem {
   label: string;
@@ -54,7 +57,45 @@ const navItems: NavItem[] = [
       </svg>
     ),
   },
+  {
+    label: 'Tests',
+    href: '/recruitment-tests',
+    icon: (
+      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+      </svg>
+    ),
+  },
 ];
+
+const companyNavItems: NavItem[] = [
+  {
+    label: 'Dashboard',
+    href: '/company/dashboard',
+    icon: (
+      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l9-9 9 9M4.5 10.5V21h15V10.5" />
+      </svg>
+    ),
+  },
+  {
+    label: 'Tests',
+    href: '/company/tests',
+    icon: (
+      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+      </svg>
+    ),
+  },
+];
+
+// Tests feature is disabled — its nav entries stay defined above but are filtered out.
+const testsNavHrefs = ['/recruitment-tests', '/company/tests'];
+const withoutDisabled = (items: NavItem[]) =>
+  TESTS_FEATURE_ENABLED ? items : items.filter((item) => !testsNavHrefs.includes(item.href));
+
+const visibleNavItems = withoutDisabled(navItems);
+const visibleCompanyNavItems = withoutDisabled(companyNavItems);
 
 const marketingNavItems: NavItem[] = [
   { label: 'Features', href: '/#features', icon: null },
@@ -100,6 +141,8 @@ export const Navbar: React.FC = () => {
   const pathname = usePathname();
   const router = useRouter();
   const { data: session, status } = useSession();
+  const { isAuthenticated: isUserAuthenticated } = useAuthStatus();
+  const { user: storedUser, logout: storeLogout } = useAuthStore();
   const { theme, toggleTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -107,9 +150,11 @@ export const Navbar: React.FC = () => {
 
   const isCompanyRoute = pathname?.startsWith('/company');
   const company = isCompanyRoute ? companyAuthService.getCompany() : null;
-  const isAuthenticated = isCompanyRoute ? companyAuthService.isAuthenticated() : status === 'authenticated';
+  const isAuthenticated = isCompanyRoute ? companyAuthService.isAuthenticated() : isUserAuthenticated;
   const user = session?.user;
-  const displayName = isCompanyRoute ? company?.companyName : user?.name;
+  const displayName = isCompanyRoute
+    ? company?.companyName
+    : user?.name || [storedUser?.firstName, storedUser?.lastName].filter(Boolean).join(' ');
   const userInitial = (displayName || user?.email || 'U')[0]?.toUpperCase() || 'U';
 
   // Close dropdown when clicking outside
@@ -132,7 +177,11 @@ export const Navbar: React.FC = () => {
         router.replace('/login?mode=company');
         return;
       }
-      await signOut({ callbackUrl: '/' });
+
+      await backendAuthService.logout();
+      storeLogout();
+      await signOut({ redirect: false });
+      router.replace('/login');
     } catch (error) {
       console.error('Logout failed:', error);
     }
@@ -156,7 +205,7 @@ export const Navbar: React.FC = () => {
           {/* Desktop Navigation */}
           {isAuthenticated && (
             <div className="hidden md:flex md:items-center md:space-x-1">
-              {navItems.map((item) => {
+              {(isCompanyRoute ? visibleCompanyNavItems : visibleNavItems).map((item) => {
                 const isActive = pathname === item.href;
                 return (
                   <Link
@@ -326,7 +375,7 @@ export const Navbar: React.FC = () => {
           <div className="md:hidden py-4 border-t border-secondary-100 dark:border-secondary-800 space-y-3">
             {isAuthenticated ? (
               <div className="space-y-1">
-                {navItems.map((item) => {
+                {(isCompanyRoute ? visibleCompanyNavItems : visibleNavItems).map((item) => {
                   const isActive = pathname === item.href;
                   return (
                     <Link

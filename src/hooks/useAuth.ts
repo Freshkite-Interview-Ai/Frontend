@@ -79,7 +79,7 @@ export const useAuth = () => {
     };
 
     exchangeToken();
-  }, [session, status, isExchangingToken]);
+  }, [isExchangingToken, session, status]);
 
   // Logout handler
   const handleLogout = useCallback(async () => {
@@ -110,7 +110,7 @@ export const useAuth = () => {
     try {
       // Reset exchange attempt flag for new login
       exchangeAttempted.current = false;
-      await signIn('google', { callbackUrl: '/auth/callback' });
+      await signIn('google', { callbackUrl: '/auth/callback' }, { prompt: 'select_account' });
     } catch (error) {
       logger.error('auth', 'Google login failed', error);
       throw error;

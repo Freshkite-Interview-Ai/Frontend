@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
 import { Card, CardContent, Button, LoadingSpinner, Logo } from '@/components/ui';
 import { userService } from '@/services';
 import { useAuthStore } from '@/store';
+import { useAuthStatus } from '@/hooks';
 import { TargetGoalType, TargetGoal } from '@/types';
 
 const GOAL_OPTIONS: {
@@ -47,14 +47,14 @@ const GOAL_OPTIONS: {
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { status } = useSession();
+  const { isAuthenticated, isLoading: authLoading } = useAuthStatus();
   const { setUser } = useAuthStore();
   const [selectedGoal, setSelectedGoal] = useState<TargetGoalType | null>(null);
   const [customMinRating, setCustomMinRating] = useState(7);
   const [customFocusAreas, setCustomFocusAreas] = useState('');
   const [saving, setSaving] = useState(false);
 
-  if (status === 'loading') {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-secondary-50 dark:bg-secondary-950">
         <LoadingSpinner size="lg" />
@@ -62,7 +62,7 @@ export default function OnboardingPage() {
     );
   }
 
-  if (status !== 'authenticated') {
+  if (!isAuthenticated) {
     router.replace('/login');
     return null;
   }

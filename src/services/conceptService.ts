@@ -25,6 +25,17 @@ export const conceptService = {
     return response.data;
   },
 
+  // Create a concept for the current user (owner is resolved from the session server-side)
+  createConcept: async (payload: {
+    title: string;
+    description: string;
+    group?: string;
+    difficulty?: ConceptDifficulty;
+  }): Promise<ApiResponse<Concept>> => {
+    const response = await apiClient.post<ApiResponse<Concept>>('/concepts', payload);
+    return response.data;
+  },
+
   // Get single concept by ID
   getConcept: async (id: string): Promise<ApiResponse<Concept>> => {
     const response = await apiClient.get<ApiResponse<Concept>>(`/concepts/${id}`);

@@ -12,6 +12,11 @@ const TOKEN_KEYS = {
 
 let pendingRefreshPromise: Promise<string | null> | null = null;
 
+const notifyAuthChanged = (): void => {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new Event('prephire-auth-changed'));
+};
+
 const getSessionStorage = (): Storage | null => {
   if (typeof window === 'undefined') return null;
   return window.sessionStorage;
@@ -173,6 +178,7 @@ export const backendAuthService = {
 
     // Set a cookie so Next.js middleware can recognise local-auth users
     document.cookie = 'prephire_local_auth=1; path=/; SameSite=Strict; max-age=604800';
+    notifyAuthChanged();
   },
 
   getAccessToken: async (): Promise<string | null> => {
@@ -251,21 +257,30 @@ export const backendAuthService = {
   clearTokens: (): void => {
     const sessionStorage = getSessionStorage();
     const localStorage = getLocalStorage();
-    if (!sessionStorage || !localStorage) return;
+    if (sessionStorage) {
+      sessionStorage.removeItem(TOKEN_KEYS.ACCESS_TOKEN);
+      sessionStorage.removeItem(TOKEN_KEYS.TOKEN_EXPIRY);
+    }
+    if (localStorage) {
+      localStorage.removeItem(TOKEN_KEYS.REFRESH_TOKEN);
+      localStorage.removeItem(TOKEN_KEYS.USER);
+    }
 
-    sessionStorage.removeItem(TOKEN_KEYS.ACCESS_TOKEN);
-    localStorage.removeItem(TOKEN_KEYS.REFRESH_TOKEN);
-    sessionStorage.removeItem(TOKEN_KEYS.TOKEN_EXPIRY);
-    localStorage.removeItem(TOKEN_KEYS.USER);
+    pendingRefreshPromise = null;
 
     // Clear the middleware auth cookie
     document.cookie = 'prephire_local_auth=; path=/; SameSite=Strict; max-age=0';
+    notifyAuthChanged();
   },
 
   logout: async (): Promise<void> => {
+    const accessToken = backendAuthService.getAccessTokenSync();
+    const refreshToken = backendAuthService.getRefreshToken();
+
+    // Clear local auth state immediately to prevent stale authenticated UI/routing.
+    backendAuthService.clearTokens();
+
     try {
-      const accessToken = backendAuthService.getAccessTokenSync();
-      const refreshToken = backendAuthService.getRefreshToken();
       if (accessToken) {
         await axios.post(
           `${API_URL}/auth/logout`,
@@ -275,8 +290,6 @@ export const backendAuthService = {
       }
     } catch (error) {
       logger.warn('backendAuth', 'Logout API call failed', error);
-    } finally {
-      backendAuthService.clearTokens();
     }
   },
 };

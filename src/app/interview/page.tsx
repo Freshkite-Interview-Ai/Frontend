@@ -3,10 +3,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
 import { DashboardLayout, PageHeader } from '@/components/layout';
 import { Card, CardContent, Button, LoadingSpinner, Badge } from '@/components/ui';
-import { useAudioRecorder, useTokenGuard } from '@/hooks';
+import { useAudioRecorder, useTokenGuard, useAuthStatus } from '@/hooks';
 import { interviewService, paymentService } from '@/services';
 import { useAppStore } from '@/store';
 import { InterviewEvaluation, InterviewFinalReport, InterviewDifficulty } from '@/types';
@@ -23,12 +22,9 @@ const formatDuration = (seconds: number): string => {
 
 export default function InterviewPage() {
 	const router = useRouter();
-	const { status } = useSession();
+	const { isAuthenticated, isLoading: authLoading } = useAuthStatus();
 	const { resume } = useAppStore();
 	const { isChecking: isPlanChecking } = useTokenGuard();
-
-	const isAuthenticated = status === 'authenticated';
-	const authLoading = status === 'loading';
 
 	const [interviewId, setInterviewId] = useState<string | null>(null);
 	const [currentQuestion, setCurrentQuestion] = useState<string | null>(null);
