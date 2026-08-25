@@ -417,14 +417,33 @@ export interface AudioRecordingState {
 }
 
 // Audio Report Types
+export interface TechnicalCorrection {
+  incorrectStatement: string;
+  correction: string;
+}
+
+/** "How You Should Explain This Concept" — a first-class report section. */
+export interface SpeakingGuidance {
+  speakingStructure: string[];
+  keyPointsMissed: string[];
+  whatYouShouldSay: string[];
+  interviewReadyVersion: string;
+  speakingTips: string[];
+}
+
 export interface AudioReport {
   id: string;
   audioId: string;
   overallRating: number;
+  /** Optional: absent on reports generated before speaking guidance shipped. */
+  overallEvaluation?: string;
   strengths: string[];
   missedPoints: string[];
   improvements: string[];
+  technicalCorrections?: TechnicalCorrection[];
+  speakingGuidance?: SpeakingGuidance | null;
   communicationFeedback: string;
+  finalRecommendation?: string;
   transcript: string | null;
   createdAt: string;
 }

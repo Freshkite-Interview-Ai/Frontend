@@ -3,6 +3,7 @@
 import React from 'react';
 import { AudioReport } from '@/types';
 import { Card, CardContent, Badge } from '@/components/ui';
+import { SpeakingGuidanceSection } from './SpeakingGuidanceSection';
 
 interface AudioReportCardProps {
   report: AudioReport;
@@ -45,6 +46,16 @@ export const AudioReportCard: React.FC<AudioReportCardProps> = ({
             </Badge>
           </div>
         </div>
+
+        {/* Overall Evaluation */}
+        {report.overallEvaluation && (
+          <div className="mb-6">
+            <h3 className="font-semibold text-secondary-900 dark:text-white mb-2">Overall Evaluation</h3>
+            <p className="text-secondary-700 dark:text-secondary-300 leading-relaxed">
+              {report.overallEvaluation}
+            </p>
+          </div>
+        )}
 
         {/* Strengths */}
         {report.strengths.length > 0 && (
@@ -106,6 +117,34 @@ export const AudioReportCard: React.FC<AudioReportCardProps> = ({
           </div>
         )}
 
+        {/* Technical Corrections */}
+        {(report.technicalCorrections?.length ?? 0) > 0 && (
+          <div className="mb-6">
+            <h3 className="flex items-center gap-2 font-semibold text-secondary-900 dark:text-white mb-3">
+              <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              Technical Corrections
+            </h3>
+            <ul className="space-y-3">
+              {report.technicalCorrections!.map((correction, index) => (
+                <li
+                  key={index}
+                  className="rounded-lg border border-red-100 dark:border-red-800/40 bg-red-50 dark:bg-red-900/20 p-3"
+                >
+                  <p className="text-sm text-red-700 dark:text-red-300 line-through decoration-red-400/60">
+                    {correction.incorrectStatement}
+                  </p>
+                  <p className="mt-2 text-sm text-secondary-700 dark:text-secondary-300">
+                    <span className="font-medium text-green-600 dark:text-green-400">Correct: </span>
+                    {correction.correction}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {/* Communication Feedback */}
         {report.communicationFeedback && (
           <div className="mb-6">
@@ -117,6 +156,19 @@ export const AudioReportCard: React.FC<AudioReportCardProps> = ({
             </h3>
             <p className="text-secondary-700 dark:text-secondary-300 bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
               {report.communicationFeedback}
+            </p>
+          </div>
+        )}
+
+        {/* How You Should Explain This Concept */}
+        <SpeakingGuidanceSection guidance={report.speakingGuidance} className="mb-6" />
+
+        {/* Final Recommendation */}
+        {report.finalRecommendation && (
+          <div className="mb-6">
+            <h3 className="font-semibold text-secondary-900 dark:text-white mb-2">Final Recommendation</h3>
+            <p className="text-secondary-700 dark:text-secondary-300 leading-relaxed">
+              {report.finalRecommendation}
             </p>
           </div>
         )}
