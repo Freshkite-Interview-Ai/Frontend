@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { DashboardLayout } from '@/components/layout';
 import { Card, CardContent, Button, LoadingPage } from '@/components/ui';
+import { SpeakingGuidanceSection, hasSpeakingGuidance } from '@/components/features';
 import { analyticsService, audioService } from '@/services';
 import { ReportWithConcept } from '@/services/audioService';
 import { useTokenGuard, useAuthStatus, useProfile } from '@/hooks';
@@ -257,6 +258,20 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
 
+          {/* Overall Evaluation */}
+          {selectedReport.overallEvaluation && (
+            <Card className="mb-6 border-0 shadow-lg">
+              <CardContent>
+                <h2 className="text-lg font-semibold text-secondary-900 dark:text-white mb-2">
+                  Overall Evaluation
+                </h2>
+                <p className="text-secondary-700 dark:text-secondary-300 leading-relaxed">
+                  {selectedReport.overallEvaluation}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Report Sections */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Strengths */}
@@ -337,6 +352,42 @@ export default function ProfilePage() {
               </CardContent>
             </Card>
 
+            {/* Technical Corrections */}
+            {(selectedReport.technicalCorrections?.length ?? 0) > 0 && (
+              <Card className="border-0 shadow-lg lg:col-span-2">
+                <CardContent>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/40 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </div>
+                    <h2 className="text-lg font-semibold text-secondary-900 dark:text-white">Technical Corrections</h2>
+                  </div>
+                  <ul className="space-y-3">
+                    {selectedReport.technicalCorrections!.map((correction, idx) => (
+                      <li key={idx} className="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30">
+                        <p className="text-sm text-red-700 dark:text-red-300 line-through decoration-red-400/60">
+                          {correction.incorrectStatement}
+                        </p>
+                        <p className="mt-2 text-sm text-secondary-700 dark:text-secondary-300">
+                          <span className="font-medium text-emerald-600 dark:text-emerald-400">Correct: </span>
+                          {correction.correction}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* How You Should Explain This Concept */}
+            {hasSpeakingGuidance(selectedReport.speakingGuidance) && (
+              <div className="lg:col-span-2">
+                <SpeakingGuidanceSection guidance={selectedReport.speakingGuidance} />
+              </div>
+            )}
+
             {/* Communication Feedback */}
             {selectedReport.communicationFeedback && (
               <Card className="border-0 shadow-lg lg:col-span-2">
@@ -351,6 +402,20 @@ export default function ProfilePage() {
                   </div>
                   <p className="text-secondary-700 dark:text-secondary-300 leading-relaxed bg-violet-50 dark:bg-violet-900/20 p-4 rounded-xl border border-violet-100 dark:border-violet-800/30">
                     {selectedReport.communicationFeedback}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Final Recommendation */}
+            {selectedReport.finalRecommendation && (
+              <Card className="border-0 shadow-lg lg:col-span-2">
+                <CardContent>
+                  <h2 className="text-lg font-semibold text-secondary-900 dark:text-white mb-2">
+                    Final Recommendation
+                  </h2>
+                  <p className="text-secondary-700 dark:text-secondary-300 leading-relaxed">
+                    {selectedReport.finalRecommendation}
                   </p>
                 </CardContent>
               </Card>

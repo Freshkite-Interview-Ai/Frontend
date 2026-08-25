@@ -1,16 +1,7 @@
 import apiClient from './api';
 import { ConceptAnswer, ApiResponse, PaginatedResponse, AudioReport } from '@/types';
 
-export interface ReportWithConcept {
-  id: string;
-  audioId: string;
-  overallRating: number;
-  strengths: string[];
-  missedPoints: string[];
-  improvements: string[];
-  communicationFeedback: string;
-  transcript: string | null;
-  createdAt: string;
+export interface ReportWithConcept extends AudioReport {
   concept: {
     id: string;
     title: string;

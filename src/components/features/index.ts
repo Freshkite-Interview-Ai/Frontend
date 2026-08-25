@@ -2,6 +2,7 @@ export { AudioRecorder } from './AudioRecorder';
 export { FileUpload } from './FileUpload';
 export { ConceptCard } from './ConceptCard';
 export { AudioReportCard } from './AudioReportCard';
+export { SpeakingGuidanceSection, hasSpeakingGuidance } from './SpeakingGuidanceSection';
 export { ResumeImprovements } from './ResumeImprovements';
 export { CodeEditor } from './CodeEditor';
 export { ProblemSolver } from './problem-solver';
